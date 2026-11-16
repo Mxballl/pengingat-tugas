@@ -1105,21 +1105,59 @@
             initAudio();
         }, { once: true });
 
+        // ========== Default Firebase Config (From User) ==========
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCZNOFmJ-_uLhWn6Y3DSQ8H7KSLcpuyhAE",
+            authDomain: "tugas-kuliah-12994.firebaseapp.com",
+            databaseURL: "https://tugas-kuliah-12994-default-rtdb.firebaseio.com",
+            projectId: "tugas-kuliah-12994",
+            storageBucket: "tugas-kuliah-12994.firebasestorage.app",
+            messagingSenderId: "823906205377",
+            appId: "1:823906205377:web:b2c23b466e555f0ae01e40",
+            measurementId: "G-JRWWM17ZCB"
+        };
+
+        function parseFirebaseConfig(raw) {
+            if (!raw || !raw.trim()) return DEFAULT_FIREBASE_CONFIG;
+            raw = raw.trim();
+            try {
+                return JSON.parse(raw);
+            } catch (e) {
+                const match = raw.match(/\{[\s\S]*\}/);
+                if (match) {
+                    try {
+                        const obj = new Function('return ' + match[0])();
+                        if (obj && typeof obj === 'object') return obj;
+                    } catch (err) {}
+                }
+            }
+            return null;
+        }
+
         // ========== Firebase Cloud Sync Engine ==========
         function initCloudSync() {
-            const rawConfig = localStorage.getItem('firebaseConfig');
-            const syncUserId = localStorage.getItem('syncUserId');
+            let rawConfig = localStorage.getItem('firebaseConfig');
+            let syncUserId = localStorage.getItem('syncUserId');
 
-            if (syncUserId) {
-                document.getElementById('syncUserId').value = syncUserId;
+            // Default to 'tugas_saya' if not set yet so user is immediately ready
+            if (!syncUserId) {
+                syncUserId = 'tugas_saya';
+                localStorage.setItem('syncUserId', syncUserId);
             }
+
+            document.getElementById('syncUserId').value = syncUserId;
+            document.getElementById('firebaseConfigInput').value = rawConfig || JSON.stringify(DEFAULT_FIREBASE_CONFIG, null, 2);
+
+            let config = null;
             if (rawConfig) {
-                document.getElementById('firebaseConfigInput').value = rawConfig;
+                config = parseFirebaseConfig(rawConfig);
+            } else {
+                config = DEFAULT_FIREBASE_CONFIG;
+                localStorage.setItem('firebaseConfig', JSON.stringify(DEFAULT_FIREBASE_CONFIG));
             }
 
-            if (rawConfig && syncUserId) {
+            if (config && syncUserId) {
                 try {
-                    const config = JSON.parse(rawConfig);
                     if (!firebase.apps.length) {
                         firebase.initializeApp(config);
                     }
@@ -1155,7 +1193,7 @@
         }
 
         async function syncTasksToCloud() {
-            const syncUserId = localStorage.getItem('syncUserId');
+            const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
             if (firestoreDB && syncUserId) {
                 try {
                     await firestoreDB.collection('user_tasks').doc(syncUserId).set({
@@ -1182,15 +1220,18 @@
             }
 
             localStorage.setItem('syncUserId', userId);
-            if (configStr) {
-                try {
-                    JSON.parse(configStr); // Validate JSON
-                    localStorage.setItem('firebaseConfig', configStr);
-                } catch {
-                    showToast('⚠️ Format Salah', 'Config Firebase harus berupa JSON yang valid.', 'danger');
-                    return;
-                }
+            
+            const parsed = parseFirebaseConfig(configStr);
+            if (!parsed) {
+                showToast('⚠️ Format Salah', 'Config Firebase tidak valid.', 'danger');
+                return;
             }
+
+            localStorage.setItem('firebaseConfig', JSON.stringify(parsed));
+            initCloudSync();
+            closeModal('syncModal');
+            showToast('☁️ Sinkronisasi Aktif', 'Laptop dan HP Anda kini terhubung!', 'success');
+        }
 
             initCloudSync();
             closeModal('syncModal');
