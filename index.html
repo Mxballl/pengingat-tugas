@@ -1419,6 +1419,7 @@
             submitBtn.textContent = '⏳ Menyimpan...';
 
             try {
+                const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
                 const fileRefs = [];
                 for (const pf of pendingFiles) {
                     const dataURL = await readFileAsDataURL(pf.rawFile);
@@ -1430,6 +1431,12 @@
                         data: dataURL
                     };
                     await saveFileToDB(fileObj);
+                    
+                    // Upload file to cloud so other devices (Phone/Laptop) can open it!
+                    if (realtimeDB && syncUserId) {
+                        realtimeDB.ref('user_files/' + syncUserId + '/' + pf.id).set(fileObj).catch(e => console.warn('Cloud file upload error:', e));
+                    }
+
                     fileRefs.push({ id: pf.id, name: pf.name, size: pf.size, type: pf.type });
                 }
 
@@ -1482,8 +1489,12 @@
                 const task = tasks.find(t => t.id === id);
                 if (!task) return;
 
+                const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
                 for (const fileId of editRemovedFileIds) {
                     await deleteFileFromDB(fileId);
+                    if (realtimeDB && syncUserId) {
+                        realtimeDB.ref('user_files/' + syncUserId + '/' + fileId).remove().catch(() => {});
+                    }
                 }
 
                 task.files = (task.files || []).filter(f => !editRemovedFileIds.includes(f.id));
@@ -1498,6 +1509,9 @@
                         data: dataURL
                     };
                     await saveFileToDB(fileObj);
+                    if (realtimeDB && syncUserId) {
+                        realtimeDB.ref('user_files/' + syncUserId + '/' + pf.id).set(fileObj).catch(() => {});
+                    }
                     task.files.push({ id: pf.id, name: pf.name, size: pf.size, type: pf.type });
                 }
 
@@ -1663,12 +1677,37 @@
             });
         }
 
+        // ========== Helper to Get File from Local or Cloud ==========
+        async function getOrFetchFile(fileId) {
+            // 1. Check local IndexedDB
+            let fileObj = await getFileFromDB(fileId).catch(() => null);
+            if (fileObj) return fileObj;
+
+            // 2. Fetch from Firebase Cloud Realtime Database if missing locally
+            const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
+            if (realtimeDB && syncUserId) {
+                showToast('⏳ Mengambil File...', 'Mengunduh file dari cloud...', 'warning');
+                try {
+                    const snapshot = await realtimeDB.ref('user_files/' + syncUserId + '/' + fileId).once('value');
+                    const cloudFile = snapshot.val();
+                    if (cloudFile && cloudFile.data) {
+                        // Cache locally in this device's IndexedDB
+                        await saveFileToDB(cloudFile).catch(() => {});
+                        return cloudFile;
+                    }
+                } catch (err) {
+                    console.error('Fetch file from cloud error:', err);
+                }
+            }
+            return null;
+        }
+
         // ========== Preview & Download File ==========
         async function previewFile(fileId) {
             try {
-                const fileObj = await getFileFromDB(fileId);
+                const fileObj = await getOrFetchFile(fileId);
                 if (!fileObj) {
-                    showToast('⚠️ File Tidak Ditemukan', 'File mungkin sudah dihapus.', 'danger');
+                    showToast('⚠️ File Tidak Ditemukan', 'File belum selesai terunggah ke cloud atau sudah dihapus.', 'danger');
                     return;
                 }
 
@@ -1714,9 +1753,9 @@
 
         async function downloadFile(fileId, fileName) {
             try {
-                const fileObj = await getFileFromDB(fileId);
+                const fileObj = await getOrFetchFile(fileId);
                 if (!fileObj) {
-                    showToast('⚠️ File Tidak Ditemukan', 'File mungkin sudah dihapus.', 'danger');
+                    showToast('⚠️ File Tidak Ditemukan', 'File belum selesai terunggah ke cloud atau sudah dihapus.', 'danger');
                     return;
                 }
 
@@ -1752,8 +1791,12 @@
         async function deleteTask(id) {
             const task = tasks.find(t => t.id === id);
             if (task && confirm(`Hapus tugas "${task.name}"?\nSemua file yang disimpan juga akan dihapus.`)) {
+                const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
                 for (const f of (task.files || [])) {
                     await deleteFileFromDB(f.id).catch(() => {});
+                    if (realtimeDB && syncUserId) {
+                        realtimeDB.ref('user_files/' + syncUserId + '/' + f.id).remove().catch(() => {});
+                    }
                 }
                 tasks = tasks.filter(t => t.id !== id);
                 saveTasks();
