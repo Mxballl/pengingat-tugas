@@ -1185,9 +1185,22 @@
                             }
                         }, (error) => {
                             console.error('Firestore sync error:', error);
+                            const badge = document.getElementById('syncStatusBadge');
+                            const text = document.getElementById('syncStatusText');
+                            badge.classList.remove('online');
+                            if (error.code === 'permission-denied') {
+                                text.textContent = '⚠️ Sinkron: Rules Tertutup';
+                                showToast('⚠️ Rules Database Tertutup', 'Di Firebase Console > Firestore Database > Rules: ubah jadi "allow read, write: if true;" lalu klik Publish.', 'warning');
+                            } else {
+                                text.textContent = '⚠️ Sinkron: Belum Aktif';
+                            }
                         });
                 } catch (e) {
                     console.warn('Firebase init error:', e);
+                    const badge = document.getElementById('syncStatusBadge');
+                    const text = document.getElementById('syncStatusText');
+                    badge.classList.remove('online');
+                    text.textContent = '☁️ Sinkron: Offline';
                 }
             }
         }
@@ -1201,7 +1214,7 @@
                         updatedAt: new Date().toISOString()
                     });
                 } catch (err) {
-                    console.error('Failed pushing to cloud:', err);
+                    console.warn('Gagal sinkron ke cloud:', err);
                 }
             }
         }
@@ -1228,11 +1241,6 @@
             }
 
             localStorage.setItem('firebaseConfig', JSON.stringify(parsed));
-            initCloudSync();
-            closeModal('syncModal');
-            showToast('☁️ Sinkronisasi Aktif', 'Laptop dan HP Anda kini terhubung!', 'success');
-        }
-
             initCloudSync();
             closeModal('syncModal');
             showToast('☁️ Sinkronisasi Aktif', 'Laptop dan HP Anda kini terhubung!', 'success');
