@@ -14,8 +14,9 @@
     <meta name="apple-mobile-web-app-title" content="TugasKuliah">
     <link rel="apple-touch-icon" href="./icon-192.png">
 
-    <!-- Firebase SDK (Compat CDN for lightweight zero-build realtime sync) -->
+    <!-- Firebase SDK (Compat CDN for Realtime Database & Firestore sync) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
@@ -1134,12 +1135,14 @@
             return null;
         }
 
-        // ========== Firebase Cloud Sync Engine ==========
+        let realtimeDB = null;
+        let activeSyncRef = null;
+
+        // ========== Firebase Cloud Sync Engine (Realtime Database) ==========
         function initCloudSync() {
             let rawConfig = localStorage.getItem('firebaseConfig');
             let syncUserId = localStorage.getItem('syncUserId');
 
-            // Default to 'tugas_saya' if not set yet so user is immediately ready
             if (!syncUserId) {
                 syncUserId = 'tugas_saya';
                 localStorage.setItem('syncUserId', syncUserId);
@@ -1161,42 +1164,39 @@
                     if (!firebase.apps.length) {
                         firebase.initializeApp(config);
                     }
-                    firestoreDB = firebase.firestore();
+                    realtimeDB = firebase.database();
 
-                    // Listen in real-time to changes from Laptop or Phone
                     const badge = document.getElementById('syncStatusBadge');
                     const text = document.getElementById('syncStatusText');
-                    badge.classList.add('online');
-                    text.textContent = '☁️ Sinkron: Online (' + syncUserId + ')';
+                    
+                    // Listen to Realtime Database changes
+                    if (activeSyncRef) activeSyncRef.off();
 
-                    if (unsubscribeFirestore) unsubscribeFirestore();
+                    activeSyncRef = realtimeDB.ref('users/' + syncUserId);
+                    activeSyncRef.on('value', (snapshot) => {
+                        badge.classList.add('online');
+                        text.textContent = '☁️ Sinkron: Online (' + syncUserId + ')';
 
-                    unsubscribeFirestore = firestoreDB.collection('user_tasks').doc(syncUserId)
-                        .onSnapshot((doc) => {
-                            if (doc.exists) {
-                                const cloudData = doc.data();
-                                if (cloudData && Array.isArray(cloudData.tasks)) {
-                                    tasks = cloudData.tasks;
-                                    localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
-                                    updateMatkulOptions();
-                                    renderTasks();
-                                    updateStats();
-                                }
-                            }
-                        }, (error) => {
-                            console.error('Firestore sync error:', error);
-                            const badge = document.getElementById('syncStatusBadge');
-                            const text = document.getElementById('syncStatusText');
-                            badge.classList.remove('online');
-                            if (error.code === 'permission-denied') {
-                                text.textContent = '⚠️ Sinkron: Rules Tertutup';
-                                showToast('⚠️ Rules Database Tertutup', 'Di Firebase Console > Firestore Database > Rules: ubah jadi "allow read, write: if true;" lalu klik Publish.', 'warning');
-                            } else {
-                                text.textContent = '⚠️ Sinkron: Belum Aktif';
-                            }
-                        });
+                        const cloudData = snapshot.val();
+                        if (cloudData && Array.isArray(cloudData.tasks)) {
+                            tasks = cloudData.tasks;
+                            localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
+                            updateMatkulOptions();
+                            renderTasks();
+                            updateStats();
+                        }
+                    }, (error) => {
+                        console.error('Realtime Database sync error:', error);
+                        badge.classList.remove('online');
+                        if (error.code === 'PERMISSION_DENIED') {
+                            text.textContent = '⚠️ Sinkron: Izin Ditolak';
+                            showToast('⚠️ Izin Database Ditolak', 'Pastikan rules di Realtime Database mengizinkan read & write.', 'warning');
+                        } else {
+                            text.textContent = '⚠️ Sinkron: Terputus';
+                        }
+                    });
                 } catch (e) {
-                    console.warn('Firebase init error:', e);
+                    console.warn('Firebase Realtime DB init error:', e);
                     const badge = document.getElementById('syncStatusBadge');
                     const text = document.getElementById('syncStatusText');
                     badge.classList.remove('online');
@@ -1207,14 +1207,14 @@
 
         async function syncTasksToCloud() {
             const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
-            if (firestoreDB && syncUserId) {
+            if (realtimeDB && syncUserId) {
                 try {
-                    await firestoreDB.collection('user_tasks').doc(syncUserId).set({
+                    await realtimeDB.ref('users/' + syncUserId).set({
                         tasks: tasks,
                         updatedAt: new Date().toISOString()
                     });
                 } catch (err) {
-                    console.warn('Gagal sinkron ke cloud:', err);
+                    console.warn('Gagal push ke Realtime Database:', err);
                 }
             }
         }
@@ -1249,8 +1249,8 @@
         function disconnectSync() {
             localStorage.removeItem('firebaseConfig');
             localStorage.removeItem('syncUserId');
-            if (unsubscribeFirestore) unsubscribeFirestore();
-            firestoreDB = null;
+            if (activeSyncRef) activeSyncRef.off();
+            realtimeDB = null;
             const badge = document.getElementById('syncStatusBadge');
             const text = document.getElementById('syncStatusText');
             badge.classList.remove('online');
