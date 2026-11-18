@@ -522,6 +522,262 @@
             background: rgba(108,92,231,0.15); border-color: var(--primary); color: var(--primary-light);
         }
 
+        .btn-icon.gcal:hover {
+            background: rgba(0, 206, 201, 0.15); border-color: var(--accent); color: var(--accent);
+        }
+
+        /* View Toggle (List vs Calendar) */
+        .view-toggle {
+            display: inline-flex; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 3px; gap: 3px;
+        }
+
+        .view-btn {
+            border: none; background: transparent; color: var(--text-muted);
+            padding: 0.35rem 0.8rem; border-radius: 9px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+        }
+
+        .view-btn.active {
+            background: var(--primary); color: white;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.4);
+        }
+
+        /* Calendar View */
+        .calendar-section {
+            display: none; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 20px;
+            padding: 1.5rem; box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+        }
+
+        .calendar-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.6rem;
+        }
+
+        .calendar-title {
+            font-size: 1.15rem; font-weight: 800; color: var(--text);
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .calendar-nav-btns {
+            display: flex; gap: 0.4rem; align-items: center;
+        }
+
+        .calendar-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px; padding: 0.35rem 0.75rem;
+            cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;
+        }
+
+        .calendar-btn:hover { background: var(--bg-card-hover); border-color: var(--primary); }
+
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .calendar-day-name {
+            text-align: center; font-size: 0.72rem; font-weight: 700;
+            color: var(--text-muted); padding: 0.4rem 0;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .calendar-cell {
+            min-height: 85px; background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 0.4rem; display: flex; flex-direction: column;
+            gap: 0.25rem; transition: all 0.2s; cursor: pointer;
+        }
+
+        .calendar-cell:hover {
+            background: rgba(108,92,231,0.08); border-color: rgba(108,92,231,0.4);
+        }
+
+        .calendar-cell.other-month {
+            opacity: 0.3;
+        }
+
+        .calendar-cell.today {
+            border-color: var(--accent);
+            background: rgba(0, 206, 201, 0.06);
+        }
+
+        .calendar-cell-header {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+        }
+
+        .calendar-cell.today .calendar-cell-header {
+            color: var(--accent);
+        }
+
+        .calendar-tasks {
+            display: flex; flex-direction: column; gap: 2px;
+            overflow-y: auto; max-height: 70px;
+        }
+
+        .calendar-task-chip {
+            font-size: 0.65rem; padding: 0.15rem 0.35rem; border-radius: 5px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-weight: 600; text-decoration: none; display: block;
+        }
+
+        .calendar-task-chip.priority-tinggi { background: rgba(255, 82, 82, 0.25); color: #ff7675; }
+        .calendar-task-chip.priority-sedang { background: rgba(255, 177, 66, 0.25); color: #ffeaa7; }
+        .calendar-task-chip.priority-rendah { background: rgba(46, 213, 115, 0.25); color: #55efc4; }
+        .calendar-task-chip.completed { opacity: 0.45; text-decoration: line-through; }
+
+        /* Sub-tasks / Progress Bar */
+        .subtasks-box {
+            margin-top: 0.6rem; padding: 0.6rem 0.8rem;
+            background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .subtasks-header {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .progress-bar-bg {
+            width: 100%; height: 6px; background: rgba(255,255,255,0.08);
+            border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 3px; transition: width 0.3s ease;
+        }
+
+        .subtask-items-list {
+            display: flex; flex-direction: column; gap: 0.3rem;
+        }
+
+        .subtask-item {
+            display: flex; align-items: center; gap: 0.45rem;
+            font-size: 0.76rem; color: var(--text); cursor: pointer;
+            user-select: none;
+        }
+
+        .subtask-item input[type="checkbox"] {
+            cursor: pointer; accent-color: var(--primary);
+            width: 14px; height: 14px;
+        }
+
+        .subtask-item.done span {
+            text-decoration: line-through; color: var(--text-muted);
+        }
+
+        /* Group Assignment Styles */
+        .group-type-selector {
+            display: flex; gap: 0.8rem; margin-bottom: 0.6rem;
+        }
+
+        .group-radio-label {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            color: var(--text);
+        }
+
+        .group-radio-label input { width: auto; margin: 0; }
+
+        .group-members-box {
+            display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem;
+        }
+
+        .group-member-tag {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.2rem 0.55rem; border-radius: 6px;
+            background: rgba(108, 92, 231, 0.15); border: 1px solid rgba(108, 92, 231, 0.3);
+            font-size: 0.7rem; color: var(--primary-light);
+        }
+
+        .tag-group { background: rgba(0, 206, 201, 0.15); color: var(--accent); }
+
+        /* Pomodoro Timer Modal & Controls */
+        .btn-pomodoro {
+            background: linear-gradient(135deg, #e17055, #d63031);
+            color: white; border: none; border-radius: 20px;
+            padding: 0.4rem 0.85rem; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;
+            box-shadow: 0 4px 12px rgba(214, 48, 49, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-pomodoro:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(214, 48, 49, 0.4); }
+
+        .pomodoro-container {
+            text-align: center; padding: 0.5rem 0;
+        }
+
+        .pomodoro-modes {
+            display: flex; justify-content: center; gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pomodoro-mode-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 20px; padding: 0.4rem 0.9rem;
+            font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+
+        .pomodoro-mode-btn.active {
+            background: #d63031; border-color: #d63031; color: white;
+            box-shadow: 0 4px 15px rgba(214, 48, 49, 0.4);
+        }
+
+        .pomodoro-timer-display {
+            font-size: 4.2rem; font-weight: 800; font-family: monospace;
+            background: linear-gradient(135deg, #ff7675, #fab1a0);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem; letter-spacing: 2px;
+        }
+
+        .pomodoro-task-label {
+            font-size: 0.85rem; color: var(--accent); font-weight: 600;
+            margin-bottom: 1.2rem;
+        }
+
+        .pomodoro-actions {
+            display: flex; justify-content: center; gap: 0.8rem; margin-bottom: 1.2rem;
+        }
+
+        .pomodoro-btn-main {
+            background: linear-gradient(135deg, #d63031, #e17055);
+            color: white; border: none; border-radius: 14px;
+            padding: 0.8rem 2rem; font-size: 1.1rem; font-weight: 700;
+            cursor: pointer; box-shadow: 0 6px 20px rgba(214, 48, 49, 0.4);
+            transition: all 0.2s; min-width: 130px;
+        }
+
+        .pomodoro-btn-reset {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 14px;
+            padding: 0.8rem 1.4rem; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+        }
+
+        .ambient-box {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.7rem 1rem;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.8rem; color: var(--text);
+        }
+
+        .ambient-btn {
+            background: rgba(0, 206, 201, 0.12); border: 1px solid var(--accent);
+            color: var(--accent); border-radius: 8px; padding: 0.3rem 0.7rem;
+            font-size: 0.75rem; font-weight: 600; cursor: pointer;
+        }
+
+        .ambient-btn.active {
+            background: var(--accent); color: #0f0f1a;
+        }
+
         /* Empty State */
         .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
         .empty-state .emoji { font-size: 3rem; margin-bottom: 0.8rem; }
@@ -642,6 +898,9 @@
         <div class="header-content">
             <h1><span>📚</span> Pengingat Tugas Kuliah</h1>
             <div class="header-actions">
+                <button class="btn-pomodoro" onclick="openPomodoroModal()" title="Buka Mode Fokus Pomodoro">
+                    ⏱️ Pomodoro
+                </button>
                 <button id="installAppBtn" class="btn-install" onclick="installPWA()">
                     📲 Pasang di HP
                 </button>
@@ -711,6 +970,29 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label>Tipe Tugas</label>
+                        <div class="group-type-selector">
+                            <label class="group-radio-label">
+                                <input type="radio" name="taskType" value="individu" checked onchange="toggleGroupInput('add')"> 👤 Individu
+                            </label>
+                            <label class="group-radio-label">
+                                <input type="radio" name="taskType" value="kelompok" onchange="toggleGroupInput('add')"> 👥 Kelompok
+                            </label>
+                        </div>
+                        <div id="groupMembersInputBox" style="display:none;margin-top:0.4rem;">
+                            <input type="text" id="taskMembers" placeholder="Anggota & peran (contoh: Budi: Bab 1, Siti: PPT)">
+                            <span class="hint-text">Tulis anggota tim dan pembagian tugasnya.</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Sub-tugas / Langkah Pengerjaan</label>
+                        <div style="display:flex;gap:0.4rem;">
+                            <input type="text" id="newSubtaskInput" placeholder="Tambah langkah (contoh: Cari jurnal)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtask('add');}">
+                            <button type="button" class="btn btn-secondary" style="width:auto;padding:0.6rem 0.9rem;" onclick="addSubtask('add')">➕</button>
+                        </div>
+                        <div id="subtasksPreviewList" style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.5rem;"></div>
+                    </div>
+                    <div class="form-group">
                         <label>📍 Tempat / Link Pengumpulan</label>
                         <input type="text" id="taskLink" placeholder="Bisa link Google Classroom / Drive, ATAU teks (contoh: Ruang 302, Hardcopy, dll)">
                         <span class="hint-text">💡 Bisa berupa URL link online ataupun teks tempat pengumpulan fisik.</span>
@@ -753,6 +1035,10 @@
         <main class="task-section">
             <div class="section-header">
                 <div class="section-title">📋 Daftar Tugas</div>
+                <div class="view-toggle">
+                    <button class="view-btn active" id="viewListBtn" onclick="switchView('list')">📋 Daftar</button>
+                    <button class="view-btn" id="viewCalBtn" onclick="switchView('calendar')">📅 Kalender</button>
+                </div>
             </div>
 
             <div class="filter-bar">
@@ -785,6 +1071,19 @@
                     <h3>Belum ada tugas</h3>
                     <p>Tambahkan tugas pertamamu dari form di samping!</p>
                 </div>
+            </div>
+
+            <!-- Calendar Section -->
+            <div class="calendar-section" id="calendarSection">
+                <div class="calendar-nav">
+                    <div class="calendar-title" id="calendarMonthYear">📅 Bulan Tahun</div>
+                    <div class="calendar-nav-btns">
+                        <button class="calendar-btn" onclick="changeMonth(-1)">◀ Bulan Lalu</button>
+                        <button class="calendar-btn" onclick="goToToday()">Hari Ini</button>
+                        <button class="calendar-btn" onclick="changeMonth(1)">Bulan Depan ▶</button>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
             </div>
         </main>
     </div>
@@ -852,6 +1151,29 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label>Tipe Tugas</label>
+                    <div class="group-type-selector">
+                        <label class="group-radio-label">
+                            <input type="radio" name="editTaskType" value="individu" id="editTypeIndividu" onchange="toggleGroupInput('edit')"> 👤 Individu
+                        </label>
+                        <label class="group-radio-label">
+                            <input type="radio" name="editTaskType" value="kelompok" id="editTypeKelompok" onchange="toggleGroupInput('edit')"> 👥 Kelompok
+                        </label>
+                    </div>
+                    <div id="editGroupMembersInputBox" style="display:none;margin-top:0.4rem;">
+                        <input type="text" id="editMembers" placeholder="Anggota & peran (contoh: Budi: Bab 1, Siti: PPT)">
+                        <span class="hint-text">Tulis anggota tim dan pembagian tugasnya.</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>📝 Sub-tugas / Langkah Pengerjaan</label>
+                    <div style="display:flex;gap:0.4rem;">
+                        <input type="text" id="editNewSubtaskInput" placeholder="Tambah langkah pengerjaan" onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtask('edit');}">
+                        <button type="button" class="btn btn-secondary" style="width:auto;padding:0.6rem 0.9rem;" onclick="addSubtask('edit')">➕</button>
+                    </div>
+                    <div id="editSubtasksPreviewList" style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.5rem;"></div>
+                </div>
+                <div class="form-group">
                     <label>📍 Tempat / Link Pengumpulan</label>
                     <input type="text" id="editLink" placeholder="Bisa link web atau teks tempat pengumpulan">
                 </div>
@@ -874,6 +1196,38 @@
                     <button type="submit" class="btn btn-primary">💾 Simpan Perubahan</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Pomodoro Focus Mode Modal -->
+    <div class="modal-overlay" id="pomodoroModal">
+        <div class="modal" style="max-width:440px;">
+            <div class="modal-header">
+                <h2>⏱️ Mode Fokus Pomodoro</h2>
+                <button class="modal-close" onclick="closeModal('pomodoroModal')">&times;</button>
+            </div>
+            <div class="pomodoro-container">
+                <div class="pomodoro-modes">
+                    <button class="pomodoro-mode-btn active" id="pomoModeFocus" onclick="setPomodoroMode('focus')">🎯 Fokus (25m)</button>
+                    <button class="pomodoro-mode-btn" id="pomoModeShort" onclick="setPomodoroMode('short')">☕ Rehat (5m)</button>
+                    <button class="pomodoro-mode-btn" id="pomoModeLong" onclick="setPomodoroMode('long')">🌴 Istirahat (15m)</button>
+                </div>
+                <div class="pomodoro-timer-display" id="pomodoroTimerDisplay">25:00</div>
+                <div class="form-group" style="text-align:left;margin-bottom:1.2rem;">
+                    <label style="font-size:0.75rem;">Sedang Mengerjakan Tugas:</label>
+                    <select class="custom-select" id="pomodoroTaskSelect" style="width:100%;">
+                        <option value="">-- Bebas / Tanpa Tugas Spesifik --</option>
+                    </select>
+                </div>
+                <div class="pomodoro-actions">
+                    <button class="pomodoro-btn-main" id="pomodoroStartBtn" onclick="togglePomodoroTimer()">▶ Mulai</button>
+                    <button class="pomodoro-btn-reset" onclick="resetPomodoroTimer()">🔄 Reset</button>
+                </div>
+                <div class="ambient-box">
+                    <span>🌧️ Suara Hujan (Ambient Relax)</span>
+                    <button class="ambient-btn" id="ambientSoundBtn" onclick="toggleAmbientSound()">Mulai</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1077,6 +1431,10 @@
         let currentFilter = 'semua';
         let currentMatkulFilter = 'all';
         let currentSort = 'deadline-asc';
+        let currentView = 'list';
+        let calendarDate = new Date();
+        let pendingSubtasks = [];
+        let editPendingSubtasks = [];
         let notifiedTasks = {};
         let pendingFiles = [];
         let editPendingFiles = [];
@@ -1084,12 +1442,23 @@
         let firestoreDB = null;
         let unsubscribeFirestore = null;
 
+        // Pomodoro State
+        let pomoMode = 'focus';
+        let pomoTimeLeft = 25 * 60;
+        let pomoTimerInterval = null;
+        let pomoIsRunning = false;
+        let isAmbientPlaying = false;
+        let ambientAudioCtx = null;
+        let ambientSource = null;
+        let ambientGain = null;
+
         // ========== Init ==========
         document.addEventListener('DOMContentLoaded', async () => {
             await openDB();
             initCloudSync();
             updateMatkulOptions();
             renderTasks();
+            renderCalendar();
             updateStats();
             checkNotifPermission();
             setupFileUpload();
@@ -1410,6 +1779,67 @@
                 matkuls.map(m => `<option value="${escapeHtml(m)}" ${m === current ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('');
         }
 
+        // ========== Subtasks & Group Helpers ==========
+        function toggleGroupInput(mode) {
+            const isKelompok = document.querySelector(`input[name="${mode === 'add' ? 'taskType' : 'editTaskType'}"][value="kelompok"]`).checked;
+            const box = document.getElementById(mode === 'add' ? 'groupMembersInputBox' : 'editGroupMembersInputBox');
+            if (box) box.style.display = isKelompok ? 'block' : 'none';
+        }
+
+        function addSubtask(mode) {
+            const input = document.getElementById(mode === 'add' ? 'newSubtaskInput' : 'editNewSubtaskInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const subtask = {
+                id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                text: text,
+                done: false
+            };
+            if (mode === 'add') {
+                pendingSubtasks.push(subtask);
+            } else {
+                editPendingSubtasks.push(subtask);
+            }
+            input.value = '';
+            renderSubtasksPreview(mode);
+        }
+
+        function removeSubtask(index, mode) {
+            if (mode === 'add') {
+                pendingSubtasks.splice(index, 1);
+            } else {
+                editPendingSubtasks.splice(index, 1);
+            }
+            renderSubtasksPreview(mode);
+        }
+
+        function renderSubtasksPreview(mode) {
+            const list = mode === 'add' ? pendingSubtasks : editPendingSubtasks;
+            const container = document.getElementById(mode === 'add' ? 'subtasksPreviewList' : 'editSubtasksPreviewList');
+            if (!container) return;
+
+            container.innerHTML = list.map((st, i) => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.04);border-radius:8px;font-size:0.75rem;">
+                    <span>• ${escapeHtml(st.text)}</span>
+                    <button type="button" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;line-height:1;" onclick="removeSubtask(${i}, '${mode}')">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function toggleSubtaskDone(taskId, subtaskId, e) {
+            if (e) e.stopPropagation();
+            const task = tasks.find(t => t.id === taskId);
+            if (!task || !task.subtasks) return;
+            const st = task.subtasks.find(s => s.id === subtaskId);
+            if (st) {
+                st.done = !st.done;
+                saveTasks();
+                syncTasksToCloud();
+                renderTasks();
+                if (currentView === 'calendar') renderCalendar();
+            }
+        }
+
         // ========== Form Submit ==========
         document.getElementById('taskForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1432,13 +1862,15 @@
                     };
                     await saveFileToDB(fileObj);
                     
-                    // Upload file to cloud so other devices (Phone/Laptop) can open it!
                     if (realtimeDB && syncUserId) {
                         realtimeDB.ref('user_files/' + syncUserId + '/' + pf.id).set(fileObj).catch(e => console.warn('Cloud file upload error:', e));
                     }
 
                     fileRefs.push({ id: pf.id, name: pf.name, size: pf.size, type: pf.type });
                 }
+
+                const taskType = document.querySelector('input[name="taskType"]:checked').value;
+                const members = taskType === 'kelompok' ? document.getElementById('taskMembers').value.trim() : '';
 
                 const task = {
                     id: Date.now().toString(),
@@ -1448,6 +1880,9 @@
                     deadline: document.getElementById('taskDeadline').value,
                     priority: document.getElementById('taskPriority').value,
                     link: document.getElementById('taskLink').value.trim(),
+                    type: taskType,
+                    members: members,
+                    subtasks: [...pendingSubtasks],
                     files: fileRefs,
                     completed: false,
                     createdAt: new Date().toISOString()
@@ -1458,11 +1893,16 @@
                 syncTasksToCloud();
                 updateMatkulOptions();
                 renderTasks();
+                if (currentView === 'calendar') renderCalendar();
                 updateStats();
 
                 e.target.reset();
                 pendingFiles = [];
+                pendingSubtasks = [];
                 document.getElementById('filePreviewList').innerHTML = '';
+                document.getElementById('subtasksPreviewList').innerHTML = '';
+                document.querySelector('input[name="taskType"][value="individu"]').checked = true;
+                toggleGroupInput('add');
 
                 playBeep('success');
                 showToast('✅ Tugas Ditambahkan', `"${task.name}" berhasil disimpan!`, 'success');
@@ -1522,10 +1962,16 @@
                 task.priority = document.getElementById('editPriority').value;
                 task.link = document.getElementById('editLink').value.trim();
 
+                const editType = document.querySelector('input[name="editTaskType"]:checked').value;
+                task.type = editType;
+                task.members = editType === 'kelompok' ? document.getElementById('editMembers').value.trim() : '';
+                task.subtasks = [...editPendingSubtasks];
+
                 saveTasks();
                 syncTasksToCloud();
                 updateMatkulOptions();
                 renderTasks();
+                if (currentView === 'calendar') renderCalendar();
                 updateStats();
                 closeModal('editModal');
                 playBeep('success');
@@ -1618,6 +2064,12 @@
                 const rawPlace = (task.link || '').trim();
                 const isUrl = isLinkUrl(rawPlace);
 
+                // Subtasks calculation
+                const subtasks = task.subtasks || [];
+                const hasSubtasks = subtasks.length > 0;
+                const doneCount = subtasks.filter(s => s.done).length;
+                const percent = hasSubtasks ? Math.round((doneCount / subtasks.length) * 100) : 0;
+
                 return `
                     <div class="task-item ${task.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''} ${isDueSoon ? 'due-soon' : ''} priority-${task.priority}" data-id="${task.id}">
                         <div class="task-checkbox" onclick="toggleTask('${task.id}')" title="${task.completed ? 'Tandai belum selesai' : 'Tandai selesai'}"></div>
@@ -1632,8 +2084,31 @@
                                 <span class="tag tag-priority ${task.priority}">
                                     ${task.priority === 'tinggi' ? '🔥' : task.priority === 'sedang' ? '⚡' : '🍃'} ${task.priority}
                                 </span>
+                                ${task.type === 'kelompok' ? `<span class="tag tag-group">👥 Kelompok</span>` : ''}
+                                ${task.type === 'kelompok' && task.members ? `<span class="group-member-tag" title="Anggota">👤 ${escapeHtml(task.members)}</span>` : ''}
                                 ${countdown ? `<span class="countdown ${countdown.urgent ? 'urgent' : ''}">${countdown.text}</span>` : ''}
                             </div>
+
+                            ${hasSubtasks ? `
+                                <div class="subtasks-box">
+                                    <div class="subtasks-header">
+                                        <span>📝 Langkah Pengerjaan (${doneCount}/${subtasks.length})</span>
+                                        <span style="font-weight:700;color:var(--accent);">${percent}%</span>
+                                    </div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill" style="width: ${percent}%;"></div>
+                                    </div>
+                                    <div class="subtask-items-list">
+                                        ${subtasks.map(s => `
+                                            <label class="subtask-item ${s.done ? 'done' : ''}" onclick="event.stopPropagation();">
+                                                <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleSubtaskDone('${task.id}', '${s.id}', event)">
+                                                <span>${escapeHtml(s.text)}</span>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+
                             ${(rawPlace || files.length > 0) ? `
                                 <div class="task-footer-info">
                                     ${rawPlace ? (isUrl ? `
@@ -1661,6 +2136,7 @@
                             ` : ''}
                         </div>
                         <div class="task-actions">
+                            <button class="btn-icon gcal" onclick="addToGoogleCalendar('${task.id}')" title="Tambahkan ke Google Calendar">📅</button>
                             <button class="btn-icon edit" onclick="editTask('${task.id}')" title="Edit">✏️</button>
                             <button class="btn-icon delete" onclick="deleteTask('${task.id}')" title="Hapus">🗑️</button>
                         </div>
@@ -1675,6 +2151,329 @@
             }).catch(() => {
                 showToast('📋 Info', text);
             });
+        }
+
+        // ========== Google Calendar Sync ==========
+        function addToGoogleCalendar(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const deadlineDate = new Date(task.deadline);
+            if (isNaN(deadlineDate.getTime())) {
+                showToast('⚠️ Gagal', 'Format deadline tidak valid.', 'danger');
+                return;
+            }
+
+            const startDate = new Date(deadlineDate.getTime() - 60 * 60 * 1000);
+
+            function toGCalIso(d) {
+                return d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+            }
+
+            const startIso = toGCalIso(startDate);
+            const endIso = toGCalIso(deadlineDate);
+
+            let details = `📘 Mata Kuliah: ${task.matkul}\n⚡ Prioritas: ${task.priority.toUpperCase()}\n`;
+            if (task.desc) details += `📝 Deskripsi:\n${task.desc}\n\n`;
+            if (task.link) details += `📍 Tempat / Link Pengumpulan: ${task.link}\n\n`;
+            if (task.type === 'kelompok' && task.members) details += `👥 Anggota Kelompok: ${task.members}\n\n`;
+            if (task.subtasks && task.subtasks.length > 0) {
+                details += '📋 Langkah Pengerjaan:\n' + task.subtasks.map(s => `${s.done ? '[✓]' : '[ ]'} ${s.text}`).join('\n') + '\n';
+            }
+
+            const title = `[DEADLINE] ${task.name} - ${task.matkul}`;
+            const location = task.link || '';
+            const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startIso}/${endIso}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
+
+            window.open(gcalUrl, '_blank');
+            showToast('📅 Google Calendar', 'Membuka Google Calendar untuk menyimpan jadwal tugas...', 'success');
+        }
+
+        // ========== Calendar View Implementation ==========
+        function switchView(view) {
+            currentView = view;
+            const btnList = document.getElementById('viewListBtn');
+            const btnCal = document.getElementById('viewCalBtn');
+            const taskList = document.getElementById('taskList');
+            const filterBar = document.querySelector('.filter-bar');
+            const calSection = document.getElementById('calendarSection');
+
+            if (btnList && btnCal) {
+                btnList.classList.toggle('active', view === 'list');
+                btnCal.classList.toggle('active', view === 'calendar');
+            }
+
+            if (view === 'calendar') {
+                if (taskList) taskList.style.display = 'none';
+                if (filterBar) filterBar.style.display = 'none';
+                if (calSection) calSection.style.display = 'block';
+                renderCalendar();
+            } else {
+                if (taskList) taskList.style.display = 'flex';
+                if (filterBar) filterBar.style.display = 'flex';
+                if (calSection) calSection.style.display = 'none';
+                renderTasks();
+            }
+        }
+
+        function changeMonth(delta) {
+            calendarDate.setMonth(calendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function goToToday() {
+            calendarDate = new Date();
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const titleEl = document.getElementById('calendarMonthYear');
+            if (!grid || !titleEl) return;
+
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+
+            const monthNames = [
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ];
+            titleEl.textContent = `📅 ${monthNames[month]} ${year}`;
+
+            const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            let html = dayNames.map(d => `<div class="calendar-day-name">${d}</div>`).join('');
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDaysCurrent = new Date(year, month + 1, 0).getDate();
+            const totalDaysPrev = new Date(year, month, 0).getDate();
+
+            const today = new Date();
+            const isCurrentMonthYear = today.getFullYear() === year && today.getMonth() === month;
+
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const dayNum = totalDaysPrev - i;
+                html += `
+                    <div class="calendar-cell other-month">
+                        <div class="calendar-cell-header">${dayNum}</div>
+                    </div>
+                `;
+            }
+
+            for (let day = 1; day <= totalDaysCurrent; day++) {
+                const isToday = isCurrentMonthYear && today.getDate() === day;
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const daysTasks = tasks.filter(t => {
+                    if (!t.deadline) return false;
+                    return t.deadline.startsWith(dateStr);
+                });
+
+                html += `
+                    <div class="calendar-cell ${isToday ? 'today' : ''}" onclick="filterByCalendarDate('${dateStr}')">
+                        <div class="calendar-cell-header">
+                            <span>${day}</span>
+                            ${isToday ? '<span style="font-size:0.6rem;color:var(--accent);">Hari Ini</span>' : ''}
+                        </div>
+                        <div class="calendar-tasks">
+                            ${daysTasks.map(t => `
+                                <div class="calendar-task-chip priority-${t.priority} ${t.completed ? 'completed' : ''}" title="${escapeHtml(t.name)} (${t.matkul})">
+                                    ${escapeHtml(t.name)}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const totalRendered = firstDayIndex + totalDaysCurrent;
+            const remaining = (totalRendered % 7 === 0) ? 0 : 7 - (totalRendered % 7);
+            for (let i = 1; i <= remaining; i++) {
+                html += `
+                    <div class="calendar-cell other-month">
+                        <div class="calendar-cell-header">${i}</div>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function filterByCalendarDate(dateStr) {
+            const count = tasks.filter(t => t.deadline && t.deadline.startsWith(dateStr)).length;
+            if (count > 0) {
+                switchView('list');
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                showToast('📅 Jadwal Tugas', `Menampilkan tugas pada tanggal ${dateStr} (${count} tugas)`);
+            } else {
+                showToast('📅 Tanggal ' + dateStr, 'Tidak ada deadline tugas pada tanggal ini.');
+            }
+        }
+
+        // ========== Pomodoro Focus Timer ==========
+        function openPomodoroModal() {
+            const select = document.getElementById('pomodoroTaskSelect');
+            if (select) {
+                const activeTasks = tasks.filter(t => !t.completed);
+                select.innerHTML = '<option value="">-- Bebas / Tanpa Tugas Spesifik --</option>' +
+                    activeTasks.map(t => `<option value="${t.id}">${escapeHtml(t.name)} (${escapeHtml(t.matkul)})</option>`).join('');
+            }
+            updatePomodoroDisplay();
+            document.getElementById('pomodoroModal').classList.add('show');
+        }
+
+        function setPomodoroMode(mode) {
+            pomoMode = mode;
+            document.querySelectorAll('.pomodoro-mode-btn').forEach(b => b.classList.remove('active'));
+            if (mode === 'focus') {
+                pomoTimeLeft = 25 * 60;
+                document.getElementById('pomoModeFocus').classList.add('active');
+            } else if (mode === 'short') {
+                pomoTimeLeft = 5 * 60;
+                document.getElementById('pomoModeShort').classList.add('active');
+            } else if (mode === 'long') {
+                pomoTimeLeft = 15 * 60;
+                document.getElementById('pomoModeLong').classList.add('active');
+            }
+            pausePomodoroTimer();
+            updatePomodoroDisplay();
+        }
+
+        function updatePomodoroDisplay() {
+            const mins = Math.floor(pomoTimeLeft / 60);
+            const secs = pomoTimeLeft % 60;
+            const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            const display = document.getElementById('pomodoroTimerDisplay');
+            if (display) display.textContent = formatted;
+        }
+
+        function togglePomodoroTimer() {
+            if (pomoIsRunning) {
+                pausePomodoroTimer();
+            } else {
+                startPomodoroTimer();
+            }
+        }
+
+        function startPomodoroTimer() {
+            pomoIsRunning = true;
+            const btn = document.getElementById('pomodoroStartBtn');
+            if (btn) btn.textContent = '⏸ Jeda';
+
+            if (pomoTimerInterval) clearInterval(pomoTimerInterval);
+            pomoTimerInterval = setInterval(() => {
+                if (pomoTimeLeft > 0) {
+                    pomoTimeLeft--;
+                    updatePomodoroDisplay();
+                } else {
+                    clearInterval(pomoTimerInterval);
+                    pomoIsRunning = false;
+                    playBeep('urgent');
+
+                    const taskSelect = document.getElementById('pomodoroTaskSelect');
+                    const selectedTaskName = taskSelect && taskSelect.selectedOptions[0] ? taskSelect.selectedOptions[0].text : '';
+
+                    if (pomoMode === 'focus') {
+                        showToast('🎉 Sesi Fokus Selesai!', `Kerja bagus! Waktunya rehat santai 5 menit. ${selectedTaskName}`, 'success');
+                        sendSystemNotification('🎉 Sesi Fokus Pomodoro Selesai!', 'Waktunya istirahat 5 menit!');
+                        setPomodoroMode('short');
+                    } else {
+                        showToast('🔔 Waktu Istirahat Selesai!', 'Siap untuk fokus belajar lagi? Semangat!', 'warning');
+                        sendSystemNotification('🔔 Waktu Istirahat Selesai!', 'Ayo lanjut fokus belajar!');
+                        setPomodoroMode('focus');
+                    }
+                }
+            }, 1000);
+        }
+
+        function pausePomodoroTimer() {
+            pomoIsRunning = false;
+            if (pomoTimerInterval) clearInterval(pomoTimerInterval);
+            const btn = document.getElementById('pomodoroStartBtn');
+            if (btn) btn.textContent = '▶ Mulai';
+        }
+
+        function resetPomodoroTimer() {
+            pausePomodoroTimer();
+            if (pomoMode === 'focus') pomoTimeLeft = 25 * 60;
+            else if (pomoMode === 'short') pomoTimeLeft = 5 * 60;
+            else if (pomoMode === 'long') pomoTimeLeft = 15 * 60;
+            updatePomodoroDisplay();
+        }
+
+        // ========== Ambient Rain Noise Generator (Web Audio API) ==========
+        function toggleAmbientSound() {
+            const btn = document.getElementById('ambientSoundBtn');
+            if (isAmbientPlaying) {
+                stopAmbientSound();
+                if (btn) {
+                    btn.classList.remove('active');
+                    btn.textContent = 'Mulai';
+                }
+            } else {
+                startAmbientSound();
+                if (btn) {
+                    btn.classList.add('active');
+                    btn.textContent = 'Berhenti ⏸';
+                }
+            }
+        }
+
+        function startAmbientSound() {
+            try {
+                if (!ambientAudioCtx) {
+                    ambientAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (ambientAudioCtx.state === 'suspended') {
+                    ambientAudioCtx.resume();
+                }
+
+                const bufferSize = ambientAudioCtx.sampleRate * 5;
+                const noiseBuffer = ambientAudioCtx.createBuffer(1, bufferSize, ambientAudioCtx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    b0 = 0.99886 * b0 + white * 0.0555179;
+                    b1 = 0.99332 * b1 + white * 0.0750759;
+                    b2 = 0.96900 * b2 + white * 0.1538520;
+                    b3 = 0.86650 * b3 + white * 0.3104856;
+                    b4 = 0.55000 * b4 + white * 0.5329522;
+                    b5 = -0.7616 * b5 - white * 0.0168980;
+                    output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.04;
+                    b6 = white * 0.115926;
+                }
+
+                ambientSource = ambientAudioCtx.createBufferSource();
+                ambientSource.buffer = noiseBuffer;
+                ambientSource.loop = true;
+
+                const filter = ambientAudioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, ambientAudioCtx.currentTime);
+
+                ambientGain = ambientAudioCtx.createGain();
+                ambientGain.gain.setValueAtTime(0.08, ambientAudioCtx.currentTime);
+
+                ambientSource.connect(filter);
+                filter.connect(ambientGain);
+                ambientGain.connect(ambientAudioCtx.destination);
+
+                ambientSource.start();
+                isAmbientPlaying = true;
+            } catch (err) {
+                console.warn('Ambient sound error:', err);
+            }
+        }
+
+        function stopAmbientSound() {
+            if (ambientSource) {
+                try { ambientSource.stop(); } catch (e) {}
+                ambientSource.disconnect();
+                ambientSource = null;
+            }
+            isAmbientPlaying = false;
         }
 
         // ========== Helper to Get File from Local or Cloud ==========
@@ -1815,6 +2614,18 @@
 
             editPendingFiles = [];
             editRemovedFileIds = [];
+            editPendingSubtasks = JSON.parse(JSON.stringify(task.subtasks || []));
+            renderSubtasksPreview('edit');
+
+            const isKelompok = task.type === 'kelompok';
+            const radKelompok = document.getElementById('editTypeKelompok');
+            const radIndividu = document.getElementById('editTypeIndividu');
+            if (radKelompok && radIndividu) {
+                radKelompok.checked = isKelompok;
+                radIndividu.checked = !isKelompok;
+            }
+            document.getElementById('editMembers').value = task.members || '';
+            toggleGroupInput('edit');
 
             document.getElementById('editId').value = task.id;
             document.getElementById('editName').value = task.name;
@@ -1872,6 +2683,7 @@
             if (modalId === 'editModal') {
                 editPendingFiles = [];
                 editRemovedFileIds = [];
+                editPendingSubtasks = [];
             }
         }
 
