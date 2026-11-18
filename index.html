@@ -1495,7 +1495,8 @@
                     </div>
                 </div>
                 <div class="calendar-grid" id="calendarGrid"></div>
-            
+            </div>
+
             <!-- Weekly Schedule Section -->
             <div class="schedule-section" id="scheduleSection" style="display:none;">
                 <div class="schedule-header">
@@ -1514,6 +1515,7 @@
                     <button class="filter-btn" onclick="filterScheduleDay('Kamis')">Kamis</button>
                     <button class="filter-btn" onclick="filterScheduleDay('Jumat')">Jumat</button>
                     <button class="filter-btn" onclick="filterScheduleDay('Sabtu')">Sabtu</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Minggu')">Minggu</button>
                 </div>
                 <div class="schedule-grid" id="scheduleGrid"></div>
             </div>
@@ -1722,9 +1724,14 @@
                     <label>Catatan Tambahan</label>
                     <input type="text" id="schedCatatan" placeholder="Contoh: Pertemuan praktikum / bawa modul">
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('scheduleModal')">Batal</button>
-                    <button type="submit" class="btn btn-primary">💾 Simpan Jadwal</button>
+                <div class="modal-actions" style="display:flex;justify-content:space-between;align-items:center;">
+                    <button type="button" class="btn btn-danger" id="schedDeleteModalBtn" style="display:none;width:auto;padding:0.6rem 1.1rem;background:linear-gradient(135deg, #d63031, #e17055);color:white;border:none;border-radius:10px;font-weight:600;font-size:0.85rem;" onclick="handleModalDeleteSchedule()">
+                        🗑️ Hapus Kelas
+                    </button>
+                    <div style="display:flex;gap:0.6rem;margin-left:auto;">
+                        <button type="button" class="btn btn-secondary" style="width:auto;" onclick="closeModal('scheduleModal')">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="width:auto;">💾 Simpan Jadwal</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -2712,24 +2719,31 @@
             const filterBar = document.querySelector('.filter-bar');
             const calSection = document.getElementById('calendarSection');
             const schedSection = document.getElementById('scheduleSection');
+            const sectionTitle = document.querySelector('.section-title');
 
             if (btnList) btnList.classList.toggle('active', view === 'list');
             if (btnCal) btnCal.classList.toggle('active', view === 'calendar');
             if (btnSched) btnSched.classList.toggle('active', view === 'schedule');
 
             if (view === 'calendar') {
+                if (sectionTitle) sectionTitle.textContent = '📅 Kalender Deadline Tugas';
                 if (taskList) taskList.style.display = 'none';
                 if (filterBar) filterBar.style.display = 'none';
                 if (calSection) calSection.style.display = 'block';
                 if (schedSection) schedSection.style.display = 'none';
                 renderCalendar();
             } else if (view === 'schedule') {
+                if (sectionTitle) sectionTitle.textContent = '🎓 Jadwal Kuliah Mingguan';
                 if (taskList) taskList.style.display = 'none';
                 if (filterBar) filterBar.style.display = 'none';
                 if (calSection) calSection.style.display = 'none';
                 if (schedSection) schedSection.style.display = 'block';
                 renderWeeklySchedule();
+                if (schedSection) {
+                    schedSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             } else {
+                if (sectionTitle) sectionTitle.textContent = '📋 Daftar Tugas';
                 if (taskList) taskList.style.display = 'flex';
                 if (filterBar) filterBar.style.display = 'flex';
                 if (calSection) calSection.style.display = 'none';
@@ -3435,7 +3449,11 @@
                         <div class="today-class-card ${cardOngoingClass}">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 <span class="class-status-badge ${statusClass}">${statusLabel}</span>
-                                ${cls.sks ? `<span style="font-size:0.7rem;font-weight:700;color:var(--accent);">${cls.sks} SKS</span>` : ''}
+                                <div style="display:flex;align-items:center;gap:0.3rem;">
+                                    ${cls.sks ? `<span style="font-size:0.7rem;font-weight:700;color:var(--accent);margin-right:0.2rem;">${cls.sks} SKS</span>` : ''}
+                                    <button type="button" class="btn-icon-sched" onclick="openEditScheduleModal('${cls.id}')" title="Edit Jadwal Kelas">✏️</button>
+                                    <button type="button" class="btn-icon-sched delete" onclick="deleteSchedule('${cls.id}')" title="Hapus Jadwal Kelas">🗑️</button>
+                                </div>
                             </div>
                             <div class="today-class-name">${escapeHtml(cls.matkul)}</div>
                             <div class="today-class-meta">
@@ -3567,6 +3585,8 @@
             document.getElementById('schedModalTitle').textContent = '➕ Tambah Jadwal Kelas Kuliah';
             document.getElementById('scheduleForm').reset();
             document.getElementById('schedId').value = '';
+            const deleteBtn = document.getElementById('schedDeleteModalBtn');
+            if (deleteBtn) deleteBtn.style.display = 'none';
 
             const daySelect = document.getElementById('schedHari');
             if (prefillDay && daySelect) {
@@ -3594,7 +3614,17 @@
             document.getElementById('schedDosen').value = item.dosen || '';
             document.getElementById('schedCatatan').value = item.catatan || '';
 
+            const deleteBtn = document.getElementById('schedDeleteModalBtn');
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
+
             document.getElementById('scheduleModal').classList.add('show');
+        }
+
+        function handleModalDeleteSchedule() {
+            const id = document.getElementById('schedId').value;
+            if (!id) return;
+            deleteSchedule(id);
+            closeModal('scheduleModal');
         }
 
         function handleSaveSchedule(e) {
