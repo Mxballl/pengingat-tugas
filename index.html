@@ -1287,6 +1287,39 @@
             background: rgba(0, 206, 201, 0.05);
         }
 
+    
+        /* Refresh Button */
+        .btn-refresh {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+            padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-refresh:hover {
+            background: rgba(0, 206, 201, 0.12);
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .btn-refresh:active { transform: translateY(0); }
+
+        .refresh-icon {
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        .btn-refresh.spinning .refresh-icon {
+            animation: spinRefresh 0.65s linear infinite;
+        }
+
+        @keyframes spinRefresh {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
     </style>
 </head>
 <body>
@@ -1302,6 +1335,10 @@
         <div class="header-content">
             <h1><span>📚</span> Pengingat Tugas Kuliah</h1>
             <div class="header-actions">
+                <button class="btn-refresh" id="refreshAppBtn" onclick="refreshApp()" title="Segarkan Data & Sinkronisasi Realtime">
+                    <span class="refresh-icon">🔄</span>
+                    <span class="refresh-text">Refresh</span>
+                </button>
                 <button class="btn-pomodoro" onclick="openPomodoroModal()" title="Buka Mode Fokus Pomodoro">
                     ⏱️ Pomodoro
                 </button>
@@ -3719,6 +3756,76 @@
                     }
                 }
             });
+        }
+
+        
+        // ========== App Refresh Handler ==========
+        async function refreshApp() {
+            const btn = document.getElementById('refreshAppBtn');
+            if (btn) btn.classList.add('spinning');
+
+            try {
+                // 1. Reload local tasks
+                loadTasks();
+
+                // 2. Reload schedule from localStorage
+                try {
+                    const savedSched = localStorage.getItem('jadwalKuliah');
+                    if (savedSched) jadwalKuliah = JSON.parse(savedSched);
+                } catch (e) {}
+
+                // 3. Trigger Firebase Realtime Database fetch if connected
+                const syncUserId = localStorage.getItem('syncUserId');
+                if (realtimeDB && syncUserId) {
+                    try {
+                        const snapshot = await realtimeDB.ref('users/' + syncUserId).once('value');
+                        const cloudData = snapshot.val();
+                        if (cloudData) {
+                            if (Array.isArray(cloudData.tasks)) {
+                                tasks = cloudData.tasks;
+                                localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
+                            }
+                            if (Array.isArray(cloudData.jadwal)) {
+                                jadwalKuliah = cloudData.jadwal;
+                                localStorage.setItem('jadwalKuliah', JSON.stringify(jadwalKuliah));
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Realtime sync fetch error:', err);
+                    }
+                }
+
+                // 4. Update UI
+                updateMatkulOptions();
+                renderTasks();
+                updateStats();
+                renderTodayBanner();
+                if (currentView === 'calendar') {
+                    renderCalendar();
+                } else if (currentView === 'schedule') {
+                    renderWeeklySchedule();
+                }
+
+                // 5. Check deadlines and class alerts
+                checkDeadlinesRealtime();
+
+                // 6. Check Service Worker update if active
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(regs => {
+                        regs.forEach(reg => reg.update());
+                    });
+                }
+
+                showToast('🔄 Segarkan Berhasil', 'Data tugas, jadwal kuliah, dan status sinkronisasi cloud telah diperbarui!', 'success');
+            } catch (e) {
+                console.error('Refresh error:', e);
+                showToast('⚠️ Segarkan', 'Memuat ulang halaman aplikasi...', 'info');
+                setTimeout(() => location.reload(), 400);
+            } finally {
+                setTimeout(() => {
+                    if (btn) btn.classList.remove('spinning');
+                }, 600);
+            }
         }
 
         function checkDeadlinesRealtime() {
