@@ -883,6 +883,410 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    
+        /* ========== TODAY SCHEDULE BANNER ========== */
+        .today-banner-wrapper {
+            max-width: 1250px;
+            margin: 1.2rem auto 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .today-banner {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.16), rgba(0, 206, 201, 0.08));
+            border: 1px solid rgba(108, 92, 231, 0.35);
+            border-radius: 18px;
+            padding: 1.1rem 1.4rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .today-banner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 0.9rem;
+            padding-bottom: 0.7rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .today-banner-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .today-banner-title .date-badge {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(0, 206, 201, 0.12);
+            padding: 0.25rem 0.6rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 206, 201, 0.25);
+        }
+
+        .today-banner-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .today-classes-container {
+            display: flex;
+            gap: 0.9rem;
+            overflow-x: auto;
+            padding: 0.3rem 0.2rem 0.6rem 0.2rem;
+            scrollbar-width: thin;
+        }
+
+        .today-class-card {
+            background: #1e1e36;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0.9rem 1.1rem;
+            min-width: 270px;
+            max-width: 330px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .today-class-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .today-class-card.ongoing {
+            border-color: #00cec9;
+            box-shadow: 0 0 20px rgba(0, 206, 201, 0.25);
+            background: linear-gradient(145deg, #1e1e36, #162635);
+        }
+
+        .class-status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            width: fit-content;
+        }
+
+        .status-ongoing {
+            background: rgba(0, 206, 201, 0.2);
+            color: #00cec9;
+            border: 1px solid rgba(0, 206, 201, 0.4);
+        }
+
+        .status-ongoing .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #00cec9;
+            box-shadow: 0 0 8px #00cec9;
+            animation: pulseGlow 1.5s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        .status-upcoming {
+            background: rgba(253, 203, 110, 0.18);
+            color: #fdcb6e;
+            border: 1px solid rgba(253, 203, 110, 0.35);
+        }
+
+        .status-finished {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .today-class-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .today-class-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .today-class-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .today-class-actions {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.3rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .btn-class-action {
+            flex: 1;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.73rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            transition: all 0.2s;
+        }
+
+        .btn-class-link {
+            background: rgba(0, 206, 201, 0.15);
+            color: #00cec9;
+            border: 1px solid rgba(0, 206, 201, 0.3);
+        }
+        .btn-class-link:hover {
+            background: #00cec9;
+            color: #0f0f1a;
+        }
+
+        .btn-class-task {
+            background: rgba(108, 92, 231, 0.15);
+            color: #a29bfe;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+        .btn-class-task:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .today-empty-card {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem 1rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            width: 100%;
+        }
+
+        /* ========== WEEKLY SCHEDULE VIEW ========== */
+        .schedule-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .schedule-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .schedule-day-filters {
+            display: flex;
+            gap: 0.35rem;
+            overflow-x: auto;
+            padding-bottom: 0.4rem;
+            margin-bottom: 1.2rem;
+            scrollbar-width: thin;
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.1rem;
+        }
+
+        .schedule-day-col {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .schedule-day-col.is-today {
+            border-color: var(--accent);
+            background: linear-gradient(180deg, rgba(0, 206, 201, 0.08) 0%, rgba(255,255,255,0.02) 100%);
+            box-shadow: 0 0 20px rgba(0, 206, 201, 0.15);
+        }
+
+        .schedule-day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .schedule-day-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .schedule-day-name .today-star {
+            color: #fdcb6e;
+            font-size: 0.8rem;
+        }
+
+        .schedule-day-count {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .schedule-class-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            min-height: 50px;
+        }
+
+        .schedule-item {
+            background: #1f1f38;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .schedule-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .schedule-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .schedule-item-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .schedule-item-time {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(0, 206, 201, 0.12);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .schedule-item-details {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .schedule-item-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.4rem;
+            margin-top: 0.2rem;
+            padding-top: 0.4rem;
+            border-top: 1px dashed rgba(255,255,255,0.06);
+        }
+
+        .btn-icon-sched {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 6px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.72rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon-sched:hover {
+            color: var(--text);
+            border-color: var(--primary);
+            background: rgba(108, 92, 231, 0.2);
+        }
+
+        .btn-icon-sched.delete:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: rgba(255, 118, 117, 0.15);
+        }
+
+        .schedule-add-btn-empty {
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+            border-radius: 10px;
+            padding: 0.6rem;
+            font-size: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .schedule-add-btn-empty:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 206, 201, 0.05);
+        }
+
     </style>
 </head>
 <body>
@@ -932,6 +1336,12 @@
             </div>
         </div>
     </header>
+
+    
+    <!-- Today's Class Schedule Banner -->
+    <div class="today-banner-wrapper" id="todayScheduleBanner">
+        <!-- Rendered dynamically via renderTodayBanner() -->
+    </div>
 
     <!-- Main Content -->
     <div class="container">
@@ -1038,6 +1448,7 @@
                 <div class="view-toggle">
                     <button class="view-btn active" id="viewListBtn" onclick="switchView('list')">📋 Daftar</button>
                     <button class="view-btn" id="viewCalBtn" onclick="switchView('calendar')">📅 Kalender</button>
+                    <button class="view-btn" id="viewSchedBtn" onclick="switchView('schedule')">🎓 Jadwal Kuliah</button>
                 </div>
             </div>
 
@@ -1084,6 +1495,27 @@
                     </div>
                 </div>
                 <div class="calendar-grid" id="calendarGrid"></div>
+            
+            <!-- Weekly Schedule Section -->
+            <div class="schedule-section" id="scheduleSection" style="display:none;">
+                <div class="schedule-header">
+                    <div class="schedule-title">
+                        <span>🎓</span> Jadwal Kuliah Mingguan
+                    </div>
+                    <button class="btn btn-primary" style="width:auto;padding:0.6rem 1.1rem;font-size:0.85rem;" onclick="openAddScheduleModal()">
+                        ➕ Tambah Jadwal Kelas
+                    </button>
+                </div>
+                <div class="schedule-day-filters" id="scheduleDayFilters">
+                    <button class="filter-btn active" onclick="filterScheduleDay('semua')">Semua Hari</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Senin')">Senin</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Selasa')">Selasa</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Rabu')">Rabu</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Kamis')">Kamis</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Jumat')">Jumat</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Sabtu')">Sabtu</button>
+                </div>
+                <div class="schedule-grid" id="scheduleGrid"></div>
             </div>
         </main>
     </div>
@@ -1228,6 +1660,73 @@
                     <button class="ambient-btn" id="ambientSoundBtn" onclick="toggleAmbientSound()">Mulai</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    
+    <!-- Schedule Modal (Add/Edit Class) -->
+    <div class="modal-overlay" id="scheduleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="schedModalTitle">➕ Tambah Jadwal Kelas Kuliah</h2>
+                <button class="modal-close" onclick="closeModal('scheduleModal')">&times;</button>
+            </div>
+            <form id="scheduleForm" onsubmit="handleSaveSchedule(event)">
+                <input type="hidden" id="schedId">
+                <div class="form-group">
+                    <label>Hari Kuliah *</label>
+                    <select id="schedHari" class="custom-select" style="width:100%;" required>
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                        <option value="Sabtu">Sabtu</option>
+                        <option value="Minggu">Minggu</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mata Kuliah *</label>
+                    <input type="text" id="schedMatkul" placeholder="Contoh: Pemrograman Web Lanjut" required list="matkulSuggestions">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Jam Mulai *</label>
+                        <input type="time" id="schedJamMulai" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Jam Selesai *</label>
+                        <input type="time" id="schedJamSelesai" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ruangan / Gedung</label>
+                        <input type="text" id="schedRuangan" placeholder="Contoh: Lab Komputer 3 / Gedung D R.302">
+                    </div>
+                    <div class="form-group">
+                        <label>SKS</label>
+                        <input type="number" id="schedSKS" min="1" max="8" placeholder="Contoh: 3">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Link Kelas Online (Opsional: Zoom / Google Meet)</label>
+                    <input type="url" id="schedLink" placeholder="Contoh: https://meet.google.com/abc-defg-hij">
+                    <span class="hint-text">💡 Tombol masuk kelas langsung muncul di banner kuliah hari ini.</span>
+                </div>
+                <div class="form-group">
+                    <label>Dosen Pengampu</label>
+                    <input type="text" id="schedDosen" placeholder="Contoh: Dr. Budi Santoso, M.Kom">
+                </div>
+                <div class="form-group">
+                    <label>Catatan Tambahan</label>
+                    <input type="text" id="schedCatatan" placeholder="Contoh: Pertemuan praktikum / bawa modul">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('scheduleModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Jadwal</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1547,12 +2046,20 @@
                         text.textContent = '☁️ Sinkron: Online (' + syncUserId + ')';
 
                         const cloudData = snapshot.val();
-                        if (cloudData && Array.isArray(cloudData.tasks)) {
-                            tasks = cloudData.tasks;
-                            localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
+                        if (cloudData) {
+                            if (Array.isArray(cloudData.tasks)) {
+                                tasks = cloudData.tasks;
+                                localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
+                                renderTasks();
+                                updateStats();
+                            }
+                            if (Array.isArray(cloudData.jadwal)) {
+                                jadwalKuliah = cloudData.jadwal;
+                                localStorage.setItem('jadwalKuliah', JSON.stringify(jadwalKuliah));
+                                renderTodayBanner();
+                                renderWeeklySchedule();
+                            }
                             updateMatkulOptions();
-                            renderTasks();
-                            updateStats();
                         }
                     }, (error) => {
                         console.error('Realtime Database sync error:', error);
@@ -1768,15 +2275,21 @@
         }
 
         function updateMatkulOptions() {
-            const matkuls = Array.from(new Set(tasks.map(t => t.matkul).filter(Boolean))).sort();
+            const fromTasks = tasks.map(t => t.matkul).filter(Boolean);
+            const fromSched = (typeof jadwalKuliah !== 'undefined' && Array.isArray(jadwalKuliah)) ? jadwalKuliah.map(j => j.matkul).filter(Boolean) : [];
+            const matkuls = Array.from(new Set([...fromTasks, ...fromSched])).sort();
             
             const datalist = document.getElementById('matkulSuggestions');
-            datalist.innerHTML = matkuls.map(m => `<option value="${escapeHtml(m)}">`).join('');
+            if (datalist) {
+                datalist.innerHTML = matkuls.map(m => `<option value="${escapeHtml(m)}">`).join('');
+            }
 
             const filterSelect = document.getElementById('matkulFilter');
-            const current = filterSelect.value;
-            filterSelect.innerHTML = `<option value="all">📚 Semua Mata Kuliah</option>` +
-                matkuls.map(m => `<option value="${escapeHtml(m)}" ${m === current ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('');
+            if (filterSelect) {
+                const current = filterSelect.value;
+                filterSelect.innerHTML = `<option value="all">📚 Semua Mata Kuliah</option>` +
+                    matkuls.map(m => `<option value="${escapeHtml(m)}" ${m === current ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('');
+            }
         }
 
         // ========== Subtasks & Group Helpers ==========
@@ -2194,24 +2707,33 @@
             currentView = view;
             const btnList = document.getElementById('viewListBtn');
             const btnCal = document.getElementById('viewCalBtn');
+            const btnSched = document.getElementById('viewSchedBtn');
             const taskList = document.getElementById('taskList');
             const filterBar = document.querySelector('.filter-bar');
             const calSection = document.getElementById('calendarSection');
+            const schedSection = document.getElementById('scheduleSection');
 
-            if (btnList && btnCal) {
-                btnList.classList.toggle('active', view === 'list');
-                btnCal.classList.toggle('active', view === 'calendar');
-            }
+            if (btnList) btnList.classList.toggle('active', view === 'list');
+            if (btnCal) btnCal.classList.toggle('active', view === 'calendar');
+            if (btnSched) btnSched.classList.toggle('active', view === 'schedule');
 
             if (view === 'calendar') {
                 if (taskList) taskList.style.display = 'none';
                 if (filterBar) filterBar.style.display = 'none';
                 if (calSection) calSection.style.display = 'block';
+                if (schedSection) schedSection.style.display = 'none';
                 renderCalendar();
+            } else if (view === 'schedule') {
+                if (taskList) taskList.style.display = 'none';
+                if (filterBar) filterBar.style.display = 'none';
+                if (calSection) calSection.style.display = 'none';
+                if (schedSection) schedSection.style.display = 'block';
+                renderWeeklySchedule();
             } else {
                 if (taskList) taskList.style.display = 'flex';
                 if (filterBar) filterBar.style.display = 'flex';
                 if (calSection) calSection.style.display = 'none';
+                if (schedSection) schedSection.style.display = 'none';
                 renderTasks();
             }
         }
@@ -2777,7 +3299,401 @@
             sendSystemNotification('🚨 Tes Notifikasi Deadline', 'Pengingat tugas kuliah berjalan normal!');
         }
 
+        
+        // ========== JADWAL KULIAH MINGGUAN & BANNER HARI INI ==========
+        const DEFAULT_SAMPLE_SCHEDULE = [
+            {
+                id: 'sched_sample_1',
+                hari: 'Senin',
+                matkul: 'Kecerdasan Buatan',
+                jamMulai: '08:00',
+                jamSelesai: '10:30',
+                ruangan: 'Lab Komputer 2',
+                linkOnline: '',
+                dosen: 'Dr. Hendra, M.Kom',
+                sks: 3,
+                catatan: 'Praktikum Python & Machine Learning'
+            },
+            {
+                id: 'sched_sample_2',
+                hari: 'Rabu',
+                matkul: 'Pemrograman Web',
+                jamMulai: '10:45',
+                jamSelesai: '13:15',
+                ruangan: 'Gedung D Ruang 304',
+                linkOnline: 'https://meet.google.com',
+                dosen: 'Siti Rahma, M.T',
+                sks: 3,
+                catatan: 'Pertemuan hybrid'
+            },
+            {
+                id: 'sched_sample_3',
+                hari: 'Kamis',
+                matkul: 'Basis Data Lanjut',
+                jamMulai: '13:30',
+                jamSelesai: '15:10',
+                ruangan: 'Gedung C Ruang 201',
+                linkOnline: '',
+                dosen: 'Agus Setiawan, M.Cs',
+                sks: 2,
+                catatan: 'Materi SQL indexing'
+            }
+        ];
+
+        let jadwalKuliah = [];
+        try {
+            const savedSched = localStorage.getItem('jadwalKuliah');
+            jadwalKuliah = savedSched ? JSON.parse(savedSched) : DEFAULT_SAMPLE_SCHEDULE;
+        } catch(e) {
+            jadwalKuliah = DEFAULT_SAMPLE_SCHEDULE;
+        }
+
+        let activeScheduleDayFilter = 'semua';
+        let notifiedClassAlerts = {};
+
+        const INDO_DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const INDO_MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        function getTodayIndoName() {
+            return INDO_DAYS[new Date().getDay()];
+        }
+
+        function formatFullDateIndo(date = new Date()) {
+            return `${INDO_DAYS[date.getDay()]}, ${date.getDate()} ${INDO_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        function saveJadwal() {
+            localStorage.setItem('jadwalKuliah', JSON.stringify(jadwalKuliah));
+            renderTodayBanner();
+            renderWeeklySchedule(activeScheduleDayFilter);
+            updateMatkulOptions();
+
+            const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
+            if (realtimeDB && syncUserId) {
+                realtimeDB.ref('users/' + syncUserId + '/jadwal').set(jadwalKuliah).catch(e => {
+                    console.warn('Gagal sync jadwal ke Realtime Database:', e);
+                });
+            }
+        }
+
+        function renderTodayBanner() {
+            const banner = document.getElementById('todayScheduleBanner');
+            if (!banner) return;
+
+            const todayName = getTodayIndoName();
+            const todayClasses = jadwalKuliah
+                .filter(j => j.hari === todayName)
+                .sort((a, b) => a.jamMulai.localeCompare(b.jamMulai));
+
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            let classesHTML = '';
+
+            if (todayClasses.length === 0) {
+                classesHTML = `
+                    <div class="today-empty-card">
+                        <span style="font-size:1.4rem;">🎉</span>
+                        <div>
+                            <strong>Tidak ada jadwal kuliah hari ini!</strong>
+                            <div style="font-size:0.75rem;margin-top:0.15rem;color:var(--text-muted);">
+                                Waktu luang yang bagus untuk mencicil tugas atau beristirahat.
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                classesHTML = todayClasses.map(cls => {
+                    const [startH, startM] = cls.jamMulai.split(':').map(Number);
+                    const [endH, endM] = cls.jamSelesai.split(':').map(Number);
+                    const startTotal = startH * 60 + startM;
+                    const endTotal = endH * 60 + endM;
+
+                    let statusClass = 'status-upcoming';
+                    let statusLabel = `⏰ Jam ${cls.jamMulai}`;
+                    let cardOngoingClass = '';
+
+                    if (currentMinutes >= startTotal && currentMinutes <= endTotal) {
+                        statusClass = 'status-ongoing';
+                        statusLabel = '<span class="pulse-dot"></span> Sedang Berlangsung';
+                        cardOngoingClass = 'ongoing';
+                    } else if (currentMinutes < startTotal && (startTotal - currentMinutes) <= 60) {
+                        statusClass = 'status-upcoming';
+                        statusLabel = `⏳ Mulai ${startTotal - currentMinutes} mnt lagi`;
+                    } else if (currentMinutes > endTotal) {
+                        statusClass = 'status-finished';
+                        statusLabel = '✔️ Selesai Hari Ini';
+                    }
+
+                    const onlineBtn = cls.linkOnline ? `
+                        <a href="${escapeHtml(cls.linkOnline)}" target="_blank" class="btn-class-action btn-class-link">
+                            🔗 Masuk Kelas
+                        </a>
+                    ` : '';
+
+                    return `
+                        <div class="today-class-card ${cardOngoingClass}">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span class="class-status-badge ${statusClass}">${statusLabel}</span>
+                                ${cls.sks ? `<span style="font-size:0.7rem;font-weight:700;color:var(--accent);">${cls.sks} SKS</span>` : ''}
+                            </div>
+                            <div class="today-class-name">${escapeHtml(cls.matkul)}</div>
+                            <div class="today-class-meta">
+                                <div class="today-class-meta-row">
+                                    <span>⏰ ${cls.jamMulai} - ${cls.jamSelesai} WIB</span>
+                                </div>
+                                <div class="today-class-meta-row">
+                                    <span>🏢 ${escapeHtml(cls.ruangan || 'Ruang belum diatur')}</span>
+                                </div>
+                                ${cls.dosen ? `<div class="today-class-meta-row"><span>👤 ${escapeHtml(cls.dosen)}</span></div>` : ''}
+                            </div>
+                            <div class="today-class-actions">
+                                ${onlineBtn}
+                                <button type="button" class="btn-class-action btn-class-task" onclick="quickAddTaskForMatkul('${escapeHtml(cls.matkul)}')">
+                                    ➕ Catat Tugas
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            banner.innerHTML = `
+                <div class="today-banner">
+                    <div class="today-banner-header">
+                        <div class="today-banner-title">
+                            <span>🎓</span>
+                            <span>Kuliah Hari Ini</span>
+                            <span class="date-badge">${formatFullDateIndo()}</span>
+                        </div>
+                        <div class="today-banner-actions">
+                            <button class="btn btn-secondary btn-tiny" onclick="openAddScheduleModal('${todayName}')" title="Tambah kelas untuk hari ini">
+                                ➕ Tambah Kelas
+                            </button>
+                            <button class="btn btn-secondary btn-tiny" onclick="switchView('schedule')" title="Buka jadwal kuliah mingguan lengkap">
+                                📅 Jadwal Mingguan
+                            </button>
+                        </div>
+                    </div>
+                    <div class="today-classes-container">
+                        ${classesHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterScheduleDay(day) {
+            activeScheduleDayFilter = day;
+            const buttons = document.querySelectorAll('#scheduleDayFilters .filter-btn');
+            buttons.forEach(btn => {
+                const text = btn.textContent.trim();
+                if (day === 'semua') {
+                    btn.classList.toggle('active', text === 'Semua Hari');
+                } else {
+                    btn.classList.toggle('active', text === day);
+                }
+            });
+            renderWeeklySchedule(day);
+        }
+
+        function renderWeeklySchedule(filterDay = activeScheduleDayFilter) {
+            const grid = document.getElementById('scheduleGrid');
+            if (!grid) return;
+
+            const todayName = getTodayIndoName();
+            const daysToRender = filterDay === 'semua' ? ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'] : [filterDay];
+
+            grid.innerHTML = daysToRender.map(day => {
+                const isToday = day === todayName;
+                const classesInDay = jadwalKuliah
+                    .filter(j => j.hari === day)
+                    .sort((a, b) => a.jamMulai.localeCompare(b.jamMulai));
+
+                const classItemsHTML = classesInDay.length === 0 ? `
+                    <div class="schedule-add-btn-empty" onclick="openAddScheduleModal('${day}')">
+                        + Belum ada kelas hari ${day}. Klik untuk tambah!
+                    </div>
+                ` : classesInDay.map(cls => `
+                    <div class="schedule-item">
+                        <div class="schedule-item-top">
+                            <div class="schedule-item-title">${escapeHtml(cls.matkul)}</div>
+                            <span class="schedule-item-time">${cls.jamMulai} - ${cls.jamSelesai}</span>
+                        </div>
+                        <div class="schedule-item-details">
+                            <div>🏢 ${escapeHtml(cls.ruangan || 'Ruangan belum diatur')} ${cls.sks ? `(${cls.sks} SKS)` : ''}</div>
+                            ${cls.dosen ? `<div>👤 ${escapeHtml(cls.dosen)}</div>` : ''}
+                            ${cls.catatan ? `<div style="font-style:italic;color:#a29bfe;">💡 ${escapeHtml(cls.catatan)}</div>` : ''}
+                        </div>
+                        <div class="schedule-item-actions">
+                            ${cls.linkOnline ? `
+                                <a href="${escapeHtml(cls.linkOnline)}" target="_blank" class="btn-icon-sched" title="Buka Link Kelas Online">
+                                    🔗 Link
+                                </a>
+                            ` : ''}
+                            <button type="button" class="btn-icon-sched" onclick="quickAddTaskForMatkul('${escapeHtml(cls.matkul)}')" title="Tambah tugas untuk matkul ini">
+                                ➕ Tugas
+                            </button>
+                            <button type="button" class="btn-icon-sched" onclick="openEditScheduleModal('${cls.id}')" title="Edit Jadwal">
+                                ✏️ Edit
+                            </button>
+                            <button type="button" class="btn-icon-sched delete" onclick="deleteSchedule('${cls.id}')" title="Hapus Jadwal">
+                                🗑️ Hapus
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="schedule-day-col ${isToday ? 'is-today' : ''}">
+                        <div class="schedule-day-header">
+                            <div class="schedule-day-name">
+                                <span>${day}</span>
+                                ${isToday ? '<span class="today-star" title="Hari Ini">⭐ Hari Ini</span>' : ''}
+                            </div>
+                            <div style="display:flex;align-items:center;gap:0.4rem;">
+                                <span class="schedule-day-count">${classesInDay.length} Kelas</span>
+                                <button type="button" class="btn-icon-sched" onclick="openAddScheduleModal('${day}')" title="Tambah kelas ${day}">➕</button>
+                            </div>
+                        </div>
+                        <div class="schedule-class-list">
+                            ${classItemsHTML}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddScheduleModal(prefillDay = null) {
+            document.getElementById('schedModalTitle').textContent = '➕ Tambah Jadwal Kelas Kuliah';
+            document.getElementById('scheduleForm').reset();
+            document.getElementById('schedId').value = '';
+
+            const daySelect = document.getElementById('schedHari');
+            if (prefillDay && daySelect) {
+                daySelect.value = prefillDay;
+            } else if (daySelect) {
+                daySelect.value = getTodayIndoName();
+            }
+
+            document.getElementById('scheduleModal').classList.add('show');
+        }
+
+        function openEditScheduleModal(schedId) {
+            const item = jadwalKuliah.find(j => j.id === schedId);
+            if (!item) return;
+
+            document.getElementById('schedModalTitle').textContent = '✏️ Edit Jadwal Kelas Kuliah';
+            document.getElementById('schedId').value = item.id;
+            document.getElementById('schedHari').value = item.hari;
+            document.getElementById('schedMatkul').value = item.matkul;
+            document.getElementById('schedJamMulai').value = item.jamMulai;
+            document.getElementById('schedJamSelesai').value = item.jamSelesai;
+            document.getElementById('schedRuangan').value = item.ruangan || '';
+            document.getElementById('schedSKS').value = item.sks || '';
+            document.getElementById('schedLink').value = item.linkOnline || '';
+            document.getElementById('schedDosen').value = item.dosen || '';
+            document.getElementById('schedCatatan').value = item.catatan || '';
+
+            document.getElementById('scheduleModal').classList.add('show');
+        }
+
+        function handleSaveSchedule(e) {
+            e.preventDefault();
+            const id = document.getElementById('schedId').value;
+            const hari = document.getElementById('schedHari').value;
+            const matkul = document.getElementById('schedMatkul').value.trim();
+            const jamMulai = document.getElementById('schedJamMulai').value;
+            const jamSelesai = document.getElementById('schedJamSelesai').value;
+            const ruangan = document.getElementById('schedRuangan').value.trim();
+            const sks = document.getElementById('schedSKS').value ? parseInt(document.getElementById('schedSKS').value) : null;
+            const linkOnline = document.getElementById('schedLink').value.trim();
+            const dosen = document.getElementById('schedDosen').value.trim();
+            const catatan = document.getElementById('schedCatatan').value.trim();
+
+            if (!matkul || !jamMulai || !jamSelesai) {
+                showToast('⚠️ Data Kurang', 'Mata kuliah, jam mulai, dan jam selesai wajib diisi.', 'warning');
+                return;
+            }
+
+            if (id) {
+                const index = jadwalKuliah.findIndex(j => j.id === id);
+                if (index !== -1) {
+                    jadwalKuliah[index] = {
+                        id, hari, matkul, jamMulai, jamSelesai, ruangan, sks, linkOnline, dosen, catatan
+                    };
+                    showToast('✅ Berhasil Diperbarui', `Jadwal "${matkul}" berhasil diperbarui!`, 'success');
+                }
+            } else {
+                const newSched = {
+                    id: 'sched_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    hari, matkul, jamMulai, jamSelesai, ruangan, sks, linkOnline, dosen, catatan
+                };
+                jadwalKuliah.push(newSched);
+                showToast('✅ Jadwal Ditambahkan', `Jadwal "${matkul}" hari ${hari} berhasil disimpan!`, 'success');
+            }
+
+            saveJadwal();
+            closeModal('scheduleModal');
+        }
+
+        function deleteSchedule(schedId) {
+            const item = jadwalKuliah.find(j => j.id === schedId);
+            if (!item) return;
+
+            if (confirm(`Hapus jadwal kuliah "${item.matkul}" pada hari ${item.hari}?`)) {
+                jadwalKuliah = jadwalKuliah.filter(j => j.id !== schedId);
+                saveJadwal();
+                showToast('🗑️ Jadwal Dihapus', `Jadwal "${item.matkul}" telah dihapus.`, 'info');
+            }
+        }
+
+        function quickAddTaskForMatkul(matkul) {
+            switchView('list');
+            const matkulInput = document.getElementById('taskMatkul');
+            const nameInput = document.getElementById('taskName');
+            if (matkulInput) {
+                matkulInput.value = matkul;
+            }
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.placeholder = `Tugas ${matkul}...`;
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('📝 Catat Tugas', `Mata kuliah disetel ke "${matkul}". Silakan ketik nama tugasnya.`, 'info');
+        }
+
+        function checkClassReminders() {
+            const todayName = getTodayIndoName();
+            const todayClasses = jadwalKuliah.filter(j => j.hari === todayName);
+            if (todayClasses.length === 0) return;
+
+            const now = new Date();
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            const dateKey = now.toISOString().slice(0, 10);
+
+            todayClasses.forEach(cls => {
+                const [h, m] = cls.jamMulai.split(':').map(Number);
+                const classStartMin = h * 60 + m;
+                const diffMin = classStartMin - nowMinutes;
+
+                const alertKey = `${cls.id}_${dateKey}_15m`;
+
+                if (diffMin > 0 && diffMin <= 15) {
+                    if (!notifiedClassAlerts[alertKey]) {
+                        notifiedClassAlerts[alertKey] = true;
+                        playBeep('urgent');
+                        const title = '🔔 Kelas Kuliah 15 Menit Lagi!';
+                        const body = `Mata kuliah "${cls.matkul}" di ${cls.ruangan || 'kelas'} jam ${cls.jamMulai}. Siapkan perlengkapanmu!`;
+                        showToast(title, body, 'warning');
+                        sendSystemNotification(title, body);
+                    }
+                }
+            });
+        }
+
         function checkDeadlinesRealtime() {
+            checkClassReminders();
+            renderTodayBanner();
             const now = new Date();
             let urgentCount = 0;
             let mostUrgentTask = null;
@@ -2884,9 +3800,10 @@
             try {
                 const allFiles = await getAllFilesFromDB();
                 const backupObj = {
-                    version: 1,
+                    version: 2,
                     exportDate: new Date().toISOString(),
                     tasks: tasks,
+                    jadwal: jadwalKuliah,
                     files: allFiles
                 };
 
@@ -2926,6 +3843,16 @@
                         }
                         saveTasks();
                         syncTasksToCloud();
+
+                        if (data.jadwal && Array.isArray(data.jadwal)) {
+                            const existingSchedIds = new Set(jadwalKuliah.map(j => j.id));
+                            for (const j of data.jadwal) {
+                                if (!existingSchedIds.has(j.id)) {
+                                    jadwalKuliah.push(j);
+                                }
+                            }
+                            saveJadwal();
+                        }
 
                         if (data.files && Array.isArray(data.files)) {
                             for (const f of data.files) {
