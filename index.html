@@ -1339,8 +1339,8 @@
                     <span class="refresh-icon">🔄</span>
                     <span class="refresh-text">Refresh</span>
                 </button>
-                <button class="btn-pomodoro" onclick="openPomodoroModal()" title="Buka Mode Fokus Pomodoro">
-                    ⏱️ Pomodoro
+                <button class="btn-pomodoro" onclick="openPomodoroModal()" title="Buka Timer Belajar">
+                    ⏱️ Timer
                 </button>
                 <button id="installAppBtn" class="btn-install" onclick="installPWA()">
                     📲 Pasang di HP
@@ -1674,7 +1674,7 @@
     <div class="modal-overlay" id="pomodoroModal">
         <div class="modal" style="max-width:440px;">
             <div class="modal-header">
-                <h2>⏱️ Mode Fokus Pomodoro</h2>
+                <h2>⏱️ Timer Belajar</h2>
                 <button class="modal-close" onclick="closeModal('pomodoroModal')">&times;</button>
             </div>
             <div class="pomodoro-container">
@@ -2949,7 +2949,7 @@
 
                     if (pomoMode === 'focus') {
                         showToast('🎉 Sesi Fokus Selesai!', `Kerja bagus! Waktunya rehat santai 5 menit. ${selectedTaskName}`, 'success');
-                        sendSystemNotification('🎉 Sesi Fokus Pomodoro Selesai!', 'Waktunya istirahat 5 menit!');
+                        sendSystemNotification('🎉 Sesi Fokus Selesai!', 'Waktunya istirahat 5 menit!');
                         setPomodoroMode('short');
                     } else {
                         showToast('🔔 Waktu Istirahat Selesai!', 'Siap untuk fokus belajar lagi? Semangat!', 'warning');
