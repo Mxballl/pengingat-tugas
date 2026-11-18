@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iqbal — developer</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav id="navbar">
+        <a href="#" class="logo">iqbal</a>
+        <div class="nav-right">
+            <a href="#kerja">kerja</a>
+            <a href="#tentang">tentang</a>
+            <a href="#kontak">kontak</a>
+        </div>
+        <button class="menu-btn" id="menuBtn" aria-label="Menu">
+            <svg width="22" height="14" viewBox="0 0 22 14" fill="none">
+                <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="6" y1="7" x2="22" y2="7" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="2" y1="13" x2="22" y2="13" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#kerja">kerja</a>
+        <a href="#tentang">tentang</a>
+        <a href="#kontak">kontak</a>
+    </div>
+
+    <!-- Hero -->
+    <header class="hero" id="hero">
+        <div class="hero-inner">
+            <p class="hero-hi">M. Iqbal Assidiq</p>
+            <h1 class="hero-title">
+                Saya bikin hal-hal <br>
+                di <em>internet</em> jadi <br>
+                lebih <span class="highlight">hidup</span>.
+            </h1>
+            <p class="hero-sub">
+                Developer — suka ngulik frontend, kadang backend, 
+                dan semua yang ada di antaranya.
+            </p>
+            <div class="hero-scroll">
+                <div class="scroll-line"></div>
+            </div>
+        </div>
+        <div class="hero-stamp">
+            <span>EST.<br>2023</span>
+        </div>
+    </header>
+
+    <!-- Marquee -->
+    <div class="marquee" aria-hidden="true">
+        <div class="marquee-inner">
+            <span>WEB DEVELOPMENT</span>
+            <span class="dot">✦</span>
+            <span>UI DESIGN</span>
+            <span class="dot">✦</span>
+            <span>CREATIVE CODING</span>
+            <span class="dot">✦</span>
+            <span>OPEN SOURCE</span>
+            <span class="dot">✦</span>
+            <span>WEB DEVELOPMENT</span>
+            <span class="dot">✦</span>
+            <span>UI DESIGN</span>
+            <span class="dot">✦</span>
+            <span>CREATIVE CODING</span>
+            <span class="dot">✦</span>
+            <span>OPEN SOURCE</span>
+            <span class="dot">✦</span>
+        </div>
+    </div>
+
+    <!-- Projects -->
+    <section class="section" id="kerja">
+        <div class="container">
+            <div class="section-top">
+                <h2 class="section-label">Proyek Pilihan</h2>
+                <p class="section-count">(04)</p>
+            </div>
+
+            <div class="projects">
+                <a href="#" class="project" data-num="01">
+                    <div class="project-img">
+                        <div class="project-img-placeholder" style="background: #1a1a2e;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4a4a6a" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                        </div>
+                    </div>
+                    <div class="project-info">
+                        <h3>Toko Online Lokal</h3>
+                        <p>Platform jual-beli buat UMKM daerah. Biar jualan nggak cuma dari marketplace doang.</p>
+                        <div class="project-tags">
+                            <span>React</span>
+                            <span>Node.js</span>
+                            <span>MongoDB</span>
+                        </div>
+                    </div>
+                    <div class="project-arrow">↗</div>
+                </a>
+
+                <a href="#" class="project" data-num="02">
+                    <div class="project-img">
+                        <div class="project-img-placeholder" style="background: #1a2e1a;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4a6a4a" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        </div>
+                    </div>
+                    <div class="project-info">
+                        <h3>Jadwal Kuliah App</h3>
+                        <p>Bosen bolak-balik cek jadwal di web kampus. Jadi ya bikin sendiri yang enak dipake.</p>
+                        <div class="project-tags">
+                            <span>Vue.js</span>
+                            <span>Firebase</span>
+                            <span>PWA</span>
+                        </div>
+                    </div>
+                    <div class="project-arrow">↗</div>
+                </a>
+
+                <a href="#" class="project" data-num="03">
+                    <div class="project-img">
+                        <div class="project-img-placeholder" style="background: #2e1a1a;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6a4a4a" stroke-width="1"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        </div>
+                    </div>
+                    <div class="project-info">
+                        <h3>Dashboard Keuangan</h3>
+                        <p>Visualisasi data pengeluaran. Awalnya buat tracking duit sendiri, eh malah dipake temen-temen.</p>
+                        <div class="project-tags">
+                            <span>React</span>
+                            <span>D3.js</span>
+                            <span>PostgreSQL</span>
+                        </div>
+                    </div>
+                    <div class="project-arrow">↗</div>
+                </a>
+
+                <a href="#" class="project" data-num="04">
+                    <div class="project-img">
+                        <div class="project-img-placeholder" style="background: #1a1a2e;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4a4a6a" stroke-width="1"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        </div>
+                    </div>
+                    <div class="project-info">
+                        <h3>Chat Anonim</h3>
+                        <p>Iseng-iseng bikin platform chat tanpa login. WebSocket pertama yang beneran jalan.</p>
+                        <div class="project-tags">
+                            <span>Express</span>
+                            <span>Socket.io</span>
+                            <span>Redis</span>
+                        </div>
+                    </div>
+                    <div class="project-arrow">↗</div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About -->
+    <section class="section about-section" id="tentang">
+        <div class="container">
+            <div class="about-layout">
+                <div class="about-left">
+                    <h2 class="section-label">Tentang</h2>
+                    <div class="about-photo">
+                        <div class="photo-placeholder">
+                            <span>IA</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-right">
+                    <p class="about-big">
+                        Saya percaya web yang bagus itu bukan soal paling <em>fancy</em>, 
+                        tapi soal bikin orang nggak perlu mikir pas make.
+                    </p>
+                    <div class="about-body">
+                        <p>
+                            Mulai coding dari 2023 — awalnya cuma copy-paste dari StackOverflow 
+                            (jujur aja). Sekarang udah lebih ngerti kenapa kode itu jalan, 
+                            bukan cuma <em>gimana</em> biar jalan.
+                        </p>
+                        <p>
+                            Sehari-hari pakai JavaScript banyak — React buat yang butuh 
+                            interaktif, Vue kalo mau cepet jadi. Backend biasanya Node.js, 
+                            tapi kalau proyek kampus ya PHP/Laravel.
+                        </p>
+                        <p>
+                            Di luar koding, suka baca dokumentasi tools baru (nerd alert), 
+                            ngoprek Linux, sama contribute kecil-kecilan di GitHub.
+                        </p>
+                    </div>
+
+                    <div class="about-now">
+                        <h3>Sekarang lagi apa?</h3>
+                        <ul>
+                            <li>🔨 Ngulik TypeScript lebih dalam</li>
+                            <li>📖 Belajar system design</li>
+                            <li>🌏 Cari pengalaman freelance pertama</li>
+                        </ul>
+                    </div>
+
+                    <div class="toolbox">
+                        <h3>Toolbox</h3>
+                        <div class="tool-list">
+                            <div class="tool">JS / TS</div>
+                            <div class="tool">React</div>
+                            <div class="tool">Vue</div>
+                            <div class="tool">Node.js</div>
+                            <div class="tool">Python</div>
+                            <div class="tool">PHP</div>
+                            <div class="tool">Laravel</div>
+                            <div class="tool">PostgreSQL</div>
+                            <div class="tool">MongoDB</div>
+                            <div class="tool">Git</div>
+                            <div class="tool">Figma</div>
+                            <div class="tool">Linux</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section contact-section" id="kontak">
+        <div class="container">
+            <div class="contact-layout">
+                <div class="contact-left">
+                    <h2 class="contact-heading">
+                        Punya ide <br>atau proyek? <br>
+                        <em>Ngobrol yuk.</em>
+                    </h2>
+                </div>
+                <div class="contact-right">
+                    <div class="contact-links">
+                        <a href="mailto:iqbal@example.com" class="contact-item">
+                            <span class="contact-label">Email</span>
+                            <span class="contact-value">iqbal@example.com</span>
+                        </a>
+                        <a href="#" class="contact-item">
+                            <span class="contact-label">GitHub</span>
+                            <span class="contact-value">github.com/iqbalassidiq</span>
+                        </a>
+                        <a href="#" class="contact-item">
+                            <span class="contact-label">LinkedIn</span>
+                            <span class="contact-value">linkedin.com/in/iqbalassidiq</span>
+                        </a>
+                        <a href="#" class="contact-item">
+                            <span class="contact-label">Instagram</span>
+                            <span class="contact-value">@iqbalassidiq</span>
+                        </a>
+                    </div>
+                    <p class="contact-note">
+                        Bales biasanya kurang dari 24 jam. <br>Kalau urgent, DM IG aja langsung.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span class="footer-left">© 2026 Iqbal</span>
+            <span class="footer-right">Dibuat pake kopi &amp; begadang</span>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

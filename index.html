@@ -1,0 +1,3952 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📚 Pengingat Tugas Kuliah</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#6C5CE7">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TugasKuliah">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+
+    <!-- Firebase SDK (Compat CDN for Realtime Database & Firestore sync) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #6C5CE7;
+            --primary-light: #a29bfe;
+            --primary-dark: #5241c5;
+            --accent: #00cec9;
+            --danger: #ff5252;
+            --warning: #ffb142;
+            --success: #2ed573;
+            --bg: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #222240;
+            --bg-input: #16213e;
+            --text: #eaeaea;
+            --text-muted: #8e8ea0;
+            --border: #2d2d50;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(108,92,231,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(0,206,201,0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 80%, rgba(255,177,66,0.04) 0%, transparent 50%);
+            animation: bgShift 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0,0) rotate(0deg); }
+            33% { transform: translate(-2%,-1%) rotate(1deg); }
+            66% { transform: translate(1%,2%) rotate(-1deg); }
+        }
+
+        /* Top Urgent Alert Bar */
+        .urgent-alert-bar {
+            display: none;
+            background: linear-gradient(90deg, #ff5252, #ff793f);
+            color: white;
+            padding: 0.65rem 1.2rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 102;
+            animation: pulseBar 2s infinite;
+        }
+
+        .urgent-alert-bar.show { display: flex; }
+
+        @keyframes pulseBar {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.88; }
+        }
+
+        .urgent-alert-bar .close-alert {
+            background: none; border: none; color: white;
+            font-size: 1.2rem; cursor: pointer; padding: 0 0.4rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-card) 0%, #1e1e3a 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+
+        .header-content {
+            max-width: 1250px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 0.8rem;
+        }
+
+        .header h1 {
+            font-size: 1.35rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .header-actions {
+            display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+        }
+
+        .header-stats { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+
+        .stat {
+            text-align: center; padding: 0.3rem 0.75rem;
+            border-radius: 10px; background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+        }
+
+        .stat-number { font-size: 1.15rem; font-weight: 700; }
+        .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat.total .stat-number { color: var(--primary-light); }
+        .stat.active .stat-number { color: var(--warning); }
+        .stat.done .stat-number { color: var(--success); }
+        .stat.overdue .stat-number { color: var(--danger); }
+
+        /* Sync Status Badge */
+        .sync-badge {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.4rem 0.8rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600; cursor: pointer;
+            border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+            color: var(--text-muted); transition: all 0.3s;
+        }
+
+        .sync-badge.online {
+            border-color: var(--success); color: var(--success); background: rgba(46, 213, 115, 0.12);
+        }
+
+        .sync-badge .dot {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted);
+        }
+        .sync-badge.online .dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+        /* Install App Button */
+        .btn-install {
+            display: none; align-items: center; gap: 0.4rem;
+            padding: 0.4rem 0.85rem; border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent), #0984e3);
+            color: white; border: none; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0, 206, 201, 0.3);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-3px); }
+            60% { transform: translateY(-1.5px); }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1250px; margin: 0 auto; padding: 1.5rem;
+            display: grid; grid-template-columns: 420px 1fr; gap: 1.8rem;
+        }
+
+        @media (max-width: 950px) {
+            .container { grid-template-columns: 1fr; padding: 1rem; }
+        }
+
+        .form-section { position: sticky; top: 80px; align-self: start; }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 1.05rem; font-weight: 700; margin-bottom: 1.2rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .form-group { margin-bottom: 1rem; }
+
+        .form-group label {
+            display: block; font-size: 0.78rem; font-weight: 600;
+            color: var(--text-muted); margin-bottom: 0.35rem;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.7rem 0.9rem;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 12px; color: var(--text);
+            font-family: inherit; font-size: 0.88rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108,92,231,0.2);
+        }
+
+        .form-group textarea { resize: vertical; min-height: 55px; }
+        .form-group select option { background: var(--bg-card); }
+
+        .form-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;
+        }
+
+        .hint-text {
+            font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; display: block;
+        }
+
+        /* File Upload Area */
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px; padding: 1rem;
+            text-align: center; cursor: pointer;
+            transition: all 0.3s ease; position: relative;
+        }
+
+        .file-upload-area:hover, .file-upload-area.dragover {
+            border-color: var(--primary); background: rgba(108,92,231,0.06);
+        }
+
+        .file-upload-area input[type="file"] {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; opacity: 0; cursor: pointer;
+        }
+
+        .file-upload-icon { font-size: 1.8rem; margin-bottom: 0.2rem; }
+        .file-upload-text { font-size: 0.8rem; color: var(--text-muted); }
+        .file-upload-hint { font-size: 0.68rem; color: var(--text-muted); opacity: 0.7; margin-top: 0.2rem; }
+
+        .file-preview-list {
+            margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.4rem;
+        }
+
+        .file-preview-item {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 0.7rem; background: rgba(108,92,231,0.1);
+            border-radius: 8px; font-size: 0.76rem;
+        }
+
+        .file-preview-item .file-icon { font-size: 0.95rem; }
+        .file-preview-item .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-preview-item .file-size { color: var(--text-muted); font-size: 0.68rem; white-space: nowrap; }
+        .file-preview-item .file-remove {
+            background: none; border: none; color: var(--danger);
+            cursor: pointer; font-size: 1.1rem; padding: 0 0.2rem; line-height: 1;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 0.5rem; padding: 0.75rem 1.4rem; border: none;
+            border-radius: 12px; font-family: inherit; font-size: 0.88rem;
+            font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; box-shadow: 0 4px 15px rgba(108,92,231,0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px); box-shadow: 0 6px 25px rgba(108,92,231,0.5);
+        }
+
+        .btn-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.8rem;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); color: var(--text);
+        }
+
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+        .btn-notif {
+            background: rgba(0,206,201,0.12);
+            border: 1px solid var(--accent); color: var(--accent);
+            padding: 0.6rem 0.8rem; font-size: 0.8rem;
+        }
+
+        .btn-notif.granted {
+            background: rgba(46, 213, 115, 0.12);
+            border-color: var(--success); color: var(--success);
+        }
+
+        .btn-test {
+            background: rgba(255, 177, 66, 0.12);
+            border: 1px solid var(--warning); color: var(--warning);
+            padding: 0.6rem 0.8rem; font-size: 0.8rem;
+        }
+
+        /* Task List Controls */
+        .task-section .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1rem; flex-wrap: wrap; gap: 0.8rem;
+        }
+
+        .section-title { font-size: 1.2rem; font-weight: 700; }
+
+        .filter-bar {
+            display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.2rem;
+        }
+
+        .filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+        .filter-btn {
+            padding: 0.35rem 0.85rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); border-radius: 20px;
+            color: var(--text-muted); font-family: inherit;
+            font-size: 0.75rem; font-weight: 500;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary); border-color: var(--primary); color: white;
+        }
+
+        .search-and-dropdowns {
+            display: grid; grid-template-columns: 1fr auto auto; gap: 0.6rem;
+        }
+
+        @media (max-width: 650px) {
+            .search-and-dropdowns { grid-template-columns: 1fr; }
+        }
+
+        .search-box { position: relative; }
+
+        .search-box input {
+            width: 100%; padding: 0.65rem 0.9rem 0.65rem 2.4rem;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; color: var(--text); font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .search-box input:focus { outline: none; border-color: var(--primary); }
+        .search-box::before { content: '🔍'; position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); font-size: 0.85rem; }
+
+        .custom-select {
+            padding: 0.65rem 0.9rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 12px;
+            color: var(--text); font-family: inherit;
+            font-size: 0.82rem; cursor: pointer;
+        }
+
+        .custom-select option { background: var(--bg-card); }
+
+        /* Task Item */
+        .task-list { display: flex; flex-direction: column; gap: 0.8rem; }
+
+        .task-item {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.1rem 1.4rem;
+            display: flex; align-items: flex-start; gap: 1rem;
+            transition: all 0.3s ease; animation: slideIn 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+
+        .task-item::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+        }
+
+        .task-item.priority-tinggi::before { background: var(--danger); }
+        .task-item.priority-sedang::before { background: var(--warning); }
+        .task-item.priority-rendah::before { background: var(--success); }
+
+        .task-item:hover {
+            background: var(--bg-card-hover);
+            transform: translateX(3px);
+            border-color: rgba(108,92,231,0.3);
+        }
+
+        .task-item.completed { opacity: 0.55; }
+        .task-item.completed .task-name { text-decoration: line-through; }
+
+        .task-item.overdue:not(.completed) {
+            border-color: rgba(255, 82, 82, 0.4); background: rgba(255, 82, 82, 0.05);
+        }
+
+        .task-item.due-soon:not(.completed) {
+            border-color: rgba(255, 177, 66, 0.5); background: rgba(255, 177, 66, 0.04);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-checkbox {
+            flex-shrink: 0; width: 24px; height: 24px;
+            border-radius: 50%; border: 2px solid var(--border);
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: all 0.3s ease; margin-top: 2px;
+        }
+
+        .task-checkbox:hover {
+            border-color: var(--success); background: rgba(46, 213, 115, 0.1);
+        }
+
+        .task-item.completed .task-checkbox {
+            background: var(--success); border-color: var(--success);
+        }
+
+        .task-item.completed .task-checkbox::after {
+            content: '✓'; color: white; font-size: 0.8rem; font-weight: 700;
+        }
+
+        .task-content { flex: 1; min-width: 0; }
+        .task-name { font-size: 0.98rem; font-weight: 600; margin-bottom: 0.25rem; }
+
+        .task-desc {
+            font-size: 0.8rem; color: var(--text-muted);
+            margin-bottom: 0.55rem; line-height: 1.4; white-space: pre-line;
+        }
+
+        .task-meta {
+            display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
+        }
+
+        .tag {
+            padding: 0.18rem 0.55rem; border-radius: 8px;
+            font-size: 0.68rem; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+        }
+
+        .tag-matkul { background: rgba(108,92,231,0.15); color: var(--primary-light); }
+        .tag-deadline { background: rgba(255, 177, 66, 0.15); color: var(--warning); }
+        .tag-overdue { background: rgba(255, 82, 82, 0.2); color: var(--danger); animation: pulse 2s infinite; }
+        .tag-due-soon { background: rgba(255, 177, 66, 0.25); color: var(--warning); font-weight: 700; }
+
+        .tag-priority { text-transform: uppercase; letter-spacing: 0.05em; }
+        .tag-priority.tinggi { background: rgba(255, 82, 82, 0.15); color: var(--danger); }
+        .tag-priority.sedang { background: rgba(255, 177, 66, 0.15); color: var(--warning); }
+        .tag-priority.rendah { background: rgba(46, 213, 115, 0.15); color: var(--success); }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .task-footer-info {
+            display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.65rem; align-items: center;
+        }
+
+        .task-link-box {
+            display: inline-flex; align-items: center;
+            border-radius: 8px; overflow: hidden;
+            border: 1px solid rgba(0,206,201,0.3); background: rgba(0,206,201,0.08);
+        }
+
+        .task-link {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.3rem 0.65rem; font-size: 0.74rem;
+            color: var(--accent); text-decoration: none; transition: all 0.2s ease;
+        }
+
+        .task-link:hover { background: rgba(0,206,201,0.18); }
+
+        .task-link-copy {
+            background: transparent; border: none;
+            border-left: 1px solid rgba(0,206,201,0.25);
+            color: var(--accent); cursor: pointer;
+            padding: 0.3rem 0.5rem; font-size: 0.7rem;
+        }
+
+        .task-place-badge {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.3rem 0.65rem; border-radius: 8px;
+            background: rgba(162, 155, 254, 0.12);
+            border: 1px solid rgba(162, 155, 254, 0.3);
+            color: var(--primary-light); font-size: 0.74rem;
+        }
+
+        .task-file-chip {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.28rem 0.65rem; background: rgba(162,155,254,0.1);
+            border: 1px solid rgba(162,155,254,0.25);
+            border-radius: 8px; font-size: 0.72rem;
+            color: var(--primary-light); cursor: pointer;
+        }
+
+        .task-file-preview-btn {
+            background: none; border: none; color: var(--accent);
+            cursor: pointer; font-size: 0.75rem; margin-left: 0.2rem;
+        }
+
+        .task-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+        .btn-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; transition: all 0.2s ease;
+        }
+
+        .btn-icon.delete:hover {
+            background: rgba(255, 82, 82, 0.15); border-color: var(--danger); color: var(--danger);
+        }
+
+        .btn-icon.edit:hover {
+            background: rgba(108,92,231,0.15); border-color: var(--primary); color: var(--primary-light);
+        }
+
+        .btn-icon.gcal:hover {
+            background: rgba(0, 206, 201, 0.15); border-color: var(--accent); color: var(--accent);
+        }
+
+        /* View Toggle (List vs Calendar) */
+        .view-toggle {
+            display: inline-flex; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 3px; gap: 3px;
+        }
+
+        .view-btn {
+            border: none; background: transparent; color: var(--text-muted);
+            padding: 0.35rem 0.8rem; border-radius: 9px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+        }
+
+        .view-btn.active {
+            background: var(--primary); color: white;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.4);
+        }
+
+        /* Calendar View */
+        .calendar-section {
+            display: none; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 20px;
+            padding: 1.5rem; box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+        }
+
+        .calendar-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.6rem;
+        }
+
+        .calendar-title {
+            font-size: 1.15rem; font-weight: 800; color: var(--text);
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .calendar-nav-btns {
+            display: flex; gap: 0.4rem; align-items: center;
+        }
+
+        .calendar-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px; padding: 0.35rem 0.75rem;
+            cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;
+        }
+
+        .calendar-btn:hover { background: var(--bg-card-hover); border-color: var(--primary); }
+
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .calendar-day-name {
+            text-align: center; font-size: 0.72rem; font-weight: 700;
+            color: var(--text-muted); padding: 0.4rem 0;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .calendar-cell {
+            min-height: 85px; background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 0.4rem; display: flex; flex-direction: column;
+            gap: 0.25rem; transition: all 0.2s; cursor: pointer;
+        }
+
+        .calendar-cell:hover {
+            background: rgba(108,92,231,0.08); border-color: rgba(108,92,231,0.4);
+        }
+
+        .calendar-cell.other-month {
+            opacity: 0.3;
+        }
+
+        .calendar-cell.today {
+            border-color: var(--accent);
+            background: rgba(0, 206, 201, 0.06);
+        }
+
+        .calendar-cell-header {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+        }
+
+        .calendar-cell.today .calendar-cell-header {
+            color: var(--accent);
+        }
+
+        .calendar-tasks {
+            display: flex; flex-direction: column; gap: 2px;
+            overflow-y: auto; max-height: 70px;
+        }
+
+        .calendar-task-chip {
+            font-size: 0.65rem; padding: 0.15rem 0.35rem; border-radius: 5px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-weight: 600; text-decoration: none; display: block;
+        }
+
+        .calendar-task-chip.priority-tinggi { background: rgba(255, 82, 82, 0.25); color: #ff7675; }
+        .calendar-task-chip.priority-sedang { background: rgba(255, 177, 66, 0.25); color: #ffeaa7; }
+        .calendar-task-chip.priority-rendah { background: rgba(46, 213, 115, 0.25); color: #55efc4; }
+        .calendar-task-chip.completed { opacity: 0.45; text-decoration: line-through; }
+
+        /* Sub-tasks / Progress Bar */
+        .subtasks-box {
+            margin-top: 0.6rem; padding: 0.6rem 0.8rem;
+            background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .subtasks-header {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .progress-bar-bg {
+            width: 100%; height: 6px; background: rgba(255,255,255,0.08);
+            border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 3px; transition: width 0.3s ease;
+        }
+
+        .subtask-items-list {
+            display: flex; flex-direction: column; gap: 0.3rem;
+        }
+
+        .subtask-item {
+            display: flex; align-items: center; gap: 0.45rem;
+            font-size: 0.76rem; color: var(--text); cursor: pointer;
+            user-select: none;
+        }
+
+        .subtask-item input[type="checkbox"] {
+            cursor: pointer; accent-color: var(--primary);
+            width: 14px; height: 14px;
+        }
+
+        .subtask-item.done span {
+            text-decoration: line-through; color: var(--text-muted);
+        }
+
+        /* Group Assignment Styles */
+        .group-type-selector {
+            display: flex; gap: 0.8rem; margin-bottom: 0.6rem;
+        }
+
+        .group-radio-label {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            color: var(--text);
+        }
+
+        .group-radio-label input { width: auto; margin: 0; }
+
+        .group-members-box {
+            display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem;
+        }
+
+        .group-member-tag {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.2rem 0.55rem; border-radius: 6px;
+            background: rgba(108, 92, 231, 0.15); border: 1px solid rgba(108, 92, 231, 0.3);
+            font-size: 0.7rem; color: var(--primary-light);
+        }
+
+        .tag-group { background: rgba(0, 206, 201, 0.15); color: var(--accent); }
+
+        /* Pomodoro Timer Modal & Controls */
+        .btn-pomodoro {
+            background: linear-gradient(135deg, #e17055, #d63031);
+            color: white; border: none; border-radius: 20px;
+            padding: 0.4rem 0.85rem; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;
+            box-shadow: 0 4px 12px rgba(214, 48, 49, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-pomodoro:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(214, 48, 49, 0.4); }
+
+        .pomodoro-container {
+            text-align: center; padding: 0.5rem 0;
+        }
+
+        .pomodoro-modes {
+            display: flex; justify-content: center; gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pomodoro-mode-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 20px; padding: 0.4rem 0.9rem;
+            font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+
+        .pomodoro-mode-btn.active {
+            background: #d63031; border-color: #d63031; color: white;
+            box-shadow: 0 4px 15px rgba(214, 48, 49, 0.4);
+        }
+
+        .pomodoro-timer-display {
+            font-size: 4.2rem; font-weight: 800; font-family: monospace;
+            background: linear-gradient(135deg, #ff7675, #fab1a0);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem; letter-spacing: 2px;
+        }
+
+        .pomodoro-task-label {
+            font-size: 0.85rem; color: var(--accent); font-weight: 600;
+            margin-bottom: 1.2rem;
+        }
+
+        .pomodoro-actions {
+            display: flex; justify-content: center; gap: 0.8rem; margin-bottom: 1.2rem;
+        }
+
+        .pomodoro-btn-main {
+            background: linear-gradient(135deg, #d63031, #e17055);
+            color: white; border: none; border-radius: 14px;
+            padding: 0.8rem 2rem; font-size: 1.1rem; font-weight: 700;
+            cursor: pointer; box-shadow: 0 6px 20px rgba(214, 48, 49, 0.4);
+            transition: all 0.2s; min-width: 130px;
+        }
+
+        .pomodoro-btn-reset {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 14px;
+            padding: 0.8rem 1.4rem; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+        }
+
+        .ambient-box {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.7rem 1rem;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.8rem; color: var(--text);
+        }
+
+        .ambient-btn {
+            background: rgba(0, 206, 201, 0.12); border: 1px solid var(--accent);
+            color: var(--accent); border-radius: 8px; padding: 0.3rem 0.7rem;
+            font-size: 0.75rem; font-weight: 600; cursor: pointer;
+        }
+
+        .ambient-btn.active {
+            background: var(--accent); color: #0f0f1a;
+        }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+        .empty-state .emoji { font-size: 3rem; margin-bottom: 0.8rem; }
+        .empty-state h3 { font-size: 1.05rem; margin-bottom: 0.3rem; color: var(--text); }
+
+        /* Notification Toast Container */
+        .notif-banner {
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 0.6rem;
+            pointer-events: none; max-width: 380px; width: calc(100% - 40px);
+        }
+
+        .notif-toast {
+            background: #1e1e38; border: 1px solid var(--border);
+            border-left: 5px solid var(--warning); border-radius: 14px;
+            padding: 1rem 1.2rem; box-shadow: 0 12px 40px rgba(0,0,0,0.65);
+            animation: toastIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+        }
+
+        .notif-toast.danger { border-left-color: var(--danger); background: #261624; }
+        .notif-toast.success { border-left-color: var(--success); }
+        .notif-toast .notif-title { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; display: flex; align-items: center; justify-content: space-between; }
+        .notif-toast .notif-body { font-size: 0.78rem; color: #cfcfe2; line-height: 1.4; }
+        .notif-toast .notif-close-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
+
+        @keyframes toastIn {
+            from { transform: translateX(110%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(5px);
+            z-index: 200; display: none; align-items: center;
+            justify-content: center; padding: 1rem;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 1.8rem; width: 100%;
+            max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalIn 0.3s ease; max-height: 90vh; overflow-y: auto;
+        }
+
+        .modal.modal-large { max-width: 750px; }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.3rem;
+        }
+
+        .modal-header h2 { font-size: 1.05rem; font-weight: 700; }
+        .modal-close {
+            background: none; border: none; color: var(--text-muted);
+            font-size: 1.3rem; cursor: pointer; padding: 0.3rem;
+        }
+
+        .modal-actions { display: flex; gap: 0.8rem; margin-top: 1.4rem; }
+
+        /* Countdown */
+        .countdown { font-size: 0.72rem; color: var(--accent); font-weight: 500; }
+        .countdown.urgent { color: var(--danger); font-weight: 700; }
+
+        /* Backup area */
+        .backup-controls {
+            margin-top: 1rem; padding-top: 1rem;
+            border-top: 1px dashed var(--border); display: flex; gap: 0.5rem;
+        }
+
+        .btn-tiny { padding: 0.45rem 0.8rem; font-size: 0.75rem; border-radius: 8px; }
+
+        /* Preview container */
+        .preview-viewer {
+            width: 100%; max-height: 65vh; overflow: auto;
+            border-radius: 12px; background: rgba(0,0,0,0.3);
+            display: flex; justify-content: center; align-items: center; padding: 1rem;
+        }
+
+        .preview-viewer img { max-width: 100%; max-height: 60vh; object-fit: contain; border-radius: 8px; }
+        .preview-viewer iframe { width: 100%; height: 60vh; border: none; border-radius: 8px; background: #fff; }
+        .preview-viewer pre {
+            color: #fff; font-family: monospace; font-size: 0.8rem;
+            white-space: pre-wrap; word-break: break-all; width: 100%; max-height: 55vh; overflow-y: auto;
+        }
+
+        /* Sound toggle */
+        .sound-toggle {
+            cursor: pointer; font-size: 0.82rem; padding: 0.35rem 0.7rem;
+            border-radius: 10px; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); color: var(--text-muted); font-weight: 600;
+        }
+        .sound-toggle.active { color: var(--accent); border-color: var(--accent); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    
+        /* ========== TODAY SCHEDULE BANNER ========== */
+        .today-banner-wrapper {
+            max-width: 1250px;
+            margin: 1.2rem auto 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .today-banner {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.16), rgba(0, 206, 201, 0.08));
+            border: 1px solid rgba(108, 92, 231, 0.35);
+            border-radius: 18px;
+            padding: 1.1rem 1.4rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .today-banner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 0.9rem;
+            padding-bottom: 0.7rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .today-banner-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .today-banner-title .date-badge {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(0, 206, 201, 0.12);
+            padding: 0.25rem 0.6rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 206, 201, 0.25);
+        }
+
+        .today-banner-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .today-classes-container {
+            display: flex;
+            gap: 0.9rem;
+            overflow-x: auto;
+            padding: 0.3rem 0.2rem 0.6rem 0.2rem;
+            scrollbar-width: thin;
+        }
+
+        .today-class-card {
+            background: #1e1e36;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0.9rem 1.1rem;
+            min-width: 270px;
+            max-width: 330px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .today-class-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .today-class-card.ongoing {
+            border-color: #00cec9;
+            box-shadow: 0 0 20px rgba(0, 206, 201, 0.25);
+            background: linear-gradient(145deg, #1e1e36, #162635);
+        }
+
+        .class-status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            width: fit-content;
+        }
+
+        .status-ongoing {
+            background: rgba(0, 206, 201, 0.2);
+            color: #00cec9;
+            border: 1px solid rgba(0, 206, 201, 0.4);
+        }
+
+        .status-ongoing .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #00cec9;
+            box-shadow: 0 0 8px #00cec9;
+            animation: pulseGlow 1.5s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        .status-upcoming {
+            background: rgba(253, 203, 110, 0.18);
+            color: #fdcb6e;
+            border: 1px solid rgba(253, 203, 110, 0.35);
+        }
+
+        .status-finished {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .today-class-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .today-class-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .today-class-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .today-class-actions {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.3rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .btn-class-action {
+            flex: 1;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.73rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            transition: all 0.2s;
+        }
+
+        .btn-class-link {
+            background: rgba(0, 206, 201, 0.15);
+            color: #00cec9;
+            border: 1px solid rgba(0, 206, 201, 0.3);
+        }
+        .btn-class-link:hover {
+            background: #00cec9;
+            color: #0f0f1a;
+        }
+
+        .btn-class-task {
+            background: rgba(108, 92, 231, 0.15);
+            color: #a29bfe;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+        .btn-class-task:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .today-empty-card {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem 1rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            width: 100%;
+        }
+
+        /* ========== WEEKLY SCHEDULE VIEW ========== */
+        .schedule-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .schedule-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .schedule-day-filters {
+            display: flex;
+            gap: 0.35rem;
+            overflow-x: auto;
+            padding-bottom: 0.4rem;
+            margin-bottom: 1.2rem;
+            scrollbar-width: thin;
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.1rem;
+        }
+
+        .schedule-day-col {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .schedule-day-col.is-today {
+            border-color: var(--accent);
+            background: linear-gradient(180deg, rgba(0, 206, 201, 0.08) 0%, rgba(255,255,255,0.02) 100%);
+            box-shadow: 0 0 20px rgba(0, 206, 201, 0.15);
+        }
+
+        .schedule-day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .schedule-day-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .schedule-day-name .today-star {
+            color: #fdcb6e;
+            font-size: 0.8rem;
+        }
+
+        .schedule-day-count {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .schedule-class-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            min-height: 50px;
+        }
+
+        .schedule-item {
+            background: #1f1f38;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .schedule-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .schedule-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .schedule-item-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .schedule-item-time {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(0, 206, 201, 0.12);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .schedule-item-details {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .schedule-item-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.4rem;
+            margin-top: 0.2rem;
+            padding-top: 0.4rem;
+            border-top: 1px dashed rgba(255,255,255,0.06);
+        }
+
+        .btn-icon-sched {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 6px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.72rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon-sched:hover {
+            color: var(--text);
+            border-color: var(--primary);
+            background: rgba(108, 92, 231, 0.2);
+        }
+
+        .btn-icon-sched.delete:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: rgba(255, 118, 117, 0.15);
+        }
+
+        .schedule-add-btn-empty {
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+            border-radius: 10px;
+            padding: 0.6rem;
+            font-size: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .schedule-add-btn-empty:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 206, 201, 0.05);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Urgent Alert Bar -->
+    <div class="urgent-alert-bar" id="urgentAlertBar">
+        <span id="urgentAlertText">⚠️ PERHATIAN: Terdapat tugas kuliah yang mendekati deadline!</span>
+        <button class="close-alert" onclick="dismissUrgentBar()">&times;</button>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1><span>📚</span> Pengingat Tugas Kuliah</h1>
+            <div class="header-actions">
+                <button class="btn-pomodoro" onclick="openPomodoroModal()" title="Buka Mode Fokus Pomodoro">
+                    ⏱️ Pomodoro
+                </button>
+                <button id="installAppBtn" class="btn-install" onclick="installPWA()">
+                    📲 Pasang di HP
+                </button>
+                <div class="sync-badge" id="syncStatusBadge" onclick="openSyncModal()" title="Klik untuk atur Sinkronisasi Laptop & HP">
+                    <span class="dot"></span>
+                    <span id="syncStatusText">☁️ Sinkronisasi: Lokal</span>
+                </div>
+                <button id="soundToggleBtn" class="sound-toggle active" title="Suara Pengingat Aktif" onclick="toggleSound()">
+                    🔊 Suara: ON
+                </button>
+            </div>
+            <div class="header-stats">
+                <div class="stat total">
+                    <div class="stat-number" id="statTotal">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat active">
+                    <div class="stat-number" id="statActive">0</div>
+                    <div class="stat-label">Aktif</div>
+                </div>
+                <div class="stat done">
+                    <div class="stat-number" id="statDone">0</div>
+                    <div class="stat-label">Selesai</div>
+                </div>
+                <div class="stat overdue">
+                    <div class="stat-number" id="statOverdue">0</div>
+                    <div class="stat-label">Terlambat</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    
+    <!-- Today's Class Schedule Banner -->
+    <div class="today-banner-wrapper" id="todayScheduleBanner">
+        <!-- Rendered dynamically via renderTodayBanner() -->
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Form -->
+        <aside class="form-section">
+            <div class="card">
+                <div class="card-title">
+                    <span>➕ Tambah Tugas Baru</span>
+                </div>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label>Nama Tugas *</label>
+                        <input type="text" id="taskName" placeholder="Contoh: Makalah AI & Etika" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mata Kuliah *</label>
+                        <input type="text" id="taskMatkul" placeholder="Contoh: Kecerdasan Buatan" required list="matkulSuggestions">
+                        <datalist id="matkulSuggestions"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>Deskripsi</label>
+                        <textarea id="taskDesc" placeholder="Deskripsi atau instruksi pengerjaan..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Deadline *</label>
+                            <input type="datetime-local" id="taskDeadline" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Prioritas</label>
+                            <select id="taskPriority">
+                                <option value="sedang">⚡ Sedang</option>
+                                <option value="tinggi">🔥 Tinggi</option>
+                                <option value="rendah">🍃 Rendah</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipe Tugas</label>
+                        <div class="group-type-selector">
+                            <label class="group-radio-label">
+                                <input type="radio" name="taskType" value="individu" checked onchange="toggleGroupInput('add')"> 👤 Individu
+                            </label>
+                            <label class="group-radio-label">
+                                <input type="radio" name="taskType" value="kelompok" onchange="toggleGroupInput('add')"> 👥 Kelompok
+                            </label>
+                        </div>
+                        <div id="groupMembersInputBox" style="display:none;margin-top:0.4rem;">
+                            <input type="text" id="taskMembers" placeholder="Anggota & peran (contoh: Budi: Bab 1, Siti: PPT)">
+                            <span class="hint-text">Tulis anggota tim dan pembagian tugasnya.</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Sub-tugas / Langkah Pengerjaan</label>
+                        <div style="display:flex;gap:0.4rem;">
+                            <input type="text" id="newSubtaskInput" placeholder="Tambah langkah (contoh: Cari jurnal)" onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtask('add');}">
+                            <button type="button" class="btn btn-secondary" style="width:auto;padding:0.6rem 0.9rem;" onclick="addSubtask('add')">➕</button>
+                        </div>
+                        <div id="subtasksPreviewList" style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.5rem;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>📍 Tempat / Link Pengumpulan</label>
+                        <input type="text" id="taskLink" placeholder="Bisa link Google Classroom / Drive, ATAU teks (contoh: Ruang 302, Hardcopy, dll)">
+                        <span class="hint-text">💡 Bisa berupa URL link online ataupun teks tempat pengumpulan fisik.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>📎 File Tugas dari Dosen</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <input type="file" id="taskFiles" multiple>
+                            <div class="file-upload-icon">📁</div>
+                            <div class="file-upload-text">Klik atau drag file ke sini</div>
+                            <div class="file-upload-hint">PDF, Word, PPT, Gambar, ZIP, dll. (Maks. 15MB/file)</div>
+                        </div>
+                        <div class="file-preview-list" id="filePreviewList"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">➕ Tambah Tugas</button>
+                </form>
+
+                <div class="btn-row">
+                    <button id="notifBtn" class="btn btn-notif" onclick="requestNotifPermission()">
+                        🔔 Aktifkan Notifikasi HP
+                    </button>
+                    <button type="button" class="btn btn-test" onclick="testNotificationAlert()" title="Uji coba suara dan notifikasi pop-up">
+                        🧪 Tes Notifikasi
+                    </button>
+                </div>
+
+                <div class="backup-controls">
+                    <button type="button" class="btn btn-secondary btn-tiny" onclick="exportData()" title="Backup semua tugas & file ke JSON">
+                        💾 Backup Data
+                    </button>
+                    <label class="btn btn-secondary btn-tiny" style="cursor:pointer;margin:0;" title="Restore data dari file backup">
+                        📥 Restore
+                        <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importData(event)">
+                    </label>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Task List -->
+        <main class="task-section">
+            <div class="section-header">
+                <div class="section-title">📋 Daftar Tugas</div>
+                <div class="view-toggle">
+                    <button class="view-btn active" id="viewListBtn" onclick="switchView('list')">📋 Daftar</button>
+                    <button class="view-btn" id="viewCalBtn" onclick="switchView('calendar')">📅 Kalender</button>
+                    <button class="view-btn" id="viewSchedBtn" onclick="switchView('schedule')">🎓 Jadwal Kuliah</button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="semua">Semua</button>
+                    <button class="filter-btn" data-filter="aktif">Aktif</button>
+                    <button class="filter-btn" data-filter="selesai">Selesai</button>
+                    <button class="filter-btn" data-filter="terlambat">Terlambat</button>
+                </div>
+
+                <div class="search-and-dropdowns">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Cari nama tugas, matkul, atau tempat...">
+                    </div>
+                    <select class="custom-select" id="matkulFilter">
+                        <option value="all">📚 Semua Mata Kuliah</option>
+                    </select>
+                    <select class="custom-select" id="sortSelect">
+                        <option value="deadline-asc">⏰ Deadline Terdekat</option>
+                        <option value="deadline-desc">⏰ Deadline Terjauh</option>
+                        <option value="priority">🔥 Prioritas Tertinggi</option>
+                        <option value="name">🔤 Nama A-Z</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="task-list" id="taskList">
+                <div class="empty-state">
+                    <div class="emoji">📝</div>
+                    <h3>Belum ada tugas</h3>
+                    <p>Tambahkan tugas pertamamu dari form di samping!</p>
+                </div>
+            </div>
+
+            <!-- Calendar Section -->
+            <div class="calendar-section" id="calendarSection">
+                <div class="calendar-nav">
+                    <div class="calendar-title" id="calendarMonthYear">📅 Bulan Tahun</div>
+                    <div class="calendar-nav-btns">
+                        <button class="calendar-btn" onclick="changeMonth(-1)">◀ Bulan Lalu</button>
+                        <button class="calendar-btn" onclick="goToToday()">Hari Ini</button>
+                        <button class="calendar-btn" onclick="changeMonth(1)">Bulan Depan ▶</button>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+
+            <!-- Weekly Schedule Section -->
+            <div class="schedule-section" id="scheduleSection" style="display:none;">
+                <div class="schedule-header">
+                    <div class="schedule-title">
+                        <span>🎓</span> Jadwal Kuliah Mingguan
+                    </div>
+                    <button class="btn btn-primary" style="width:auto;padding:0.6rem 1.1rem;font-size:0.85rem;" onclick="openAddScheduleModal()">
+                        ➕ Tambah Jadwal Kelas
+                    </button>
+                </div>
+                <div class="schedule-day-filters" id="scheduleDayFilters">
+                    <button class="filter-btn active" onclick="filterScheduleDay('semua')">Semua Hari</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Senin')">Senin</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Selasa')">Selasa</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Rabu')">Rabu</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Kamis')">Kamis</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Jumat')">Jumat</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Sabtu')">Sabtu</button>
+                    <button class="filter-btn" onclick="filterScheduleDay('Minggu')">Minggu</button>
+                </div>
+                <div class="schedule-grid" id="scheduleGrid"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sync Settings Modal (Firebase) -->
+    <div class="modal-overlay" id="syncModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>☁️ Sinkronisasi Laptop & HP</h2>
+                <button class="modal-close" onclick="closeModal('syncModal')">&times;</button>
+            </div>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5;">
+                Hubungkan dengan database cloud <strong>Firebase Firestore (Gratis)</strong> agar tugas yang Anda ketik di laptop seketika muncul di HP secara otomatis!
+            </p>
+            <div class="form-group">
+                <label>ID Sinkronisasi Pribadi (Kunci Anda)</label>
+                <input type="text" id="syncUserId" placeholder="Contoh: iqbal_kuliah_2026">
+                <span class="hint-text">Gunakan ID yang sama persis di Laptop dan HP Anda.</span>
+            </div>
+            <div class="form-group">
+                <label>Firebase Config JSON (Opsional / Otomatis Cloud)</label>
+                <textarea id="firebaseConfigInput" style="min-height:90px;font-family:monospace;font-size:0.75rem;" placeholder='Paste firebaseConfig dari Firebase Console disini (atau gunakan mode Cloud Room bawaan).'></textarea>
+                <span class="hint-text">Buat gratis di <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent);">console.firebase.google.com</a> &gt; Buat Proyek &gt; Firestore Database &gt; Web App.</span>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="disconnectSync()">Putuskan</button>
+                <button type="button" class="btn btn-primary" onclick="saveSyncSettings()">💾 Simpan & Sinkronkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>✏️ Edit Tugas</h2>
+                <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Nama Tugas</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label>Mata Kuliah</label>
+                    <input type="text" id="editMatkul" required list="matkulSuggestions">
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi</label>
+                    <textarea id="editDesc"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Deadline</label>
+                        <input type="datetime-local" id="editDeadline" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prioritas</label>
+                        <select id="editPriority">
+                            <option value="sedang">⚡ Sedang</option>
+                            <option value="tinggi">🔥 Tinggi</option>
+                            <option value="rendah">🍃 Rendah</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tipe Tugas</label>
+                    <div class="group-type-selector">
+                        <label class="group-radio-label">
+                            <input type="radio" name="editTaskType" value="individu" id="editTypeIndividu" onchange="toggleGroupInput('edit')"> 👤 Individu
+                        </label>
+                        <label class="group-radio-label">
+                            <input type="radio" name="editTaskType" value="kelompok" id="editTypeKelompok" onchange="toggleGroupInput('edit')"> 👥 Kelompok
+                        </label>
+                    </div>
+                    <div id="editGroupMembersInputBox" style="display:none;margin-top:0.4rem;">
+                        <input type="text" id="editMembers" placeholder="Anggota & peran (contoh: Budi: Bab 1, Siti: PPT)">
+                        <span class="hint-text">Tulis anggota tim dan pembagian tugasnya.</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>📝 Sub-tugas / Langkah Pengerjaan</label>
+                    <div style="display:flex;gap:0.4rem;">
+                        <input type="text" id="editNewSubtaskInput" placeholder="Tambah langkah pengerjaan" onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtask('edit');}">
+                        <button type="button" class="btn btn-secondary" style="width:auto;padding:0.6rem 0.9rem;" onclick="addSubtask('edit')">➕</button>
+                    </div>
+                    <div id="editSubtasksPreviewList" style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.5rem;"></div>
+                </div>
+                <div class="form-group">
+                    <label>📍 Tempat / Link Pengumpulan</label>
+                    <input type="text" id="editLink" placeholder="Bisa link web atau teks tempat pengumpulan">
+                </div>
+                <div class="form-group">
+                    <label>📎 File Tugas (Sudah Tersimpan)</label>
+                    <div class="existing-files" id="editExistingFiles"></div>
+                </div>
+                <div class="form-group">
+                    <label>📎 Tambah File Baru</label>
+                    <div class="file-upload-area" id="editFileUploadArea">
+                        <input type="file" id="editFiles" multiple>
+                        <div class="file-upload-icon">📁</div>
+                        <div class="file-upload-text">Klik atau drag file ke sini</div>
+                        <div class="file-upload-hint">PDF, Word, PPT, Gambar, ZIP, dll.</div>
+                    </div>
+                    <div class="file-preview-list" id="editFilePreviewList"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pomodoro Focus Mode Modal -->
+    <div class="modal-overlay" id="pomodoroModal">
+        <div class="modal" style="max-width:440px;">
+            <div class="modal-header">
+                <h2>⏱️ Mode Fokus Pomodoro</h2>
+                <button class="modal-close" onclick="closeModal('pomodoroModal')">&times;</button>
+            </div>
+            <div class="pomodoro-container">
+                <div class="pomodoro-modes">
+                    <button class="pomodoro-mode-btn active" id="pomoModeFocus" onclick="setPomodoroMode('focus')">🎯 Fokus (25m)</button>
+                    <button class="pomodoro-mode-btn" id="pomoModeShort" onclick="setPomodoroMode('short')">☕ Rehat (5m)</button>
+                    <button class="pomodoro-mode-btn" id="pomoModeLong" onclick="setPomodoroMode('long')">🌴 Istirahat (15m)</button>
+                </div>
+                <div class="pomodoro-timer-display" id="pomodoroTimerDisplay">25:00</div>
+                <div class="form-group" style="text-align:left;margin-bottom:1.2rem;">
+                    <label style="font-size:0.75rem;">Sedang Mengerjakan Tugas:</label>
+                    <select class="custom-select" id="pomodoroTaskSelect" style="width:100%;">
+                        <option value="">-- Bebas / Tanpa Tugas Spesifik --</option>
+                    </select>
+                </div>
+                <div class="pomodoro-actions">
+                    <button class="pomodoro-btn-main" id="pomodoroStartBtn" onclick="togglePomodoroTimer()">▶ Mulai</button>
+                    <button class="pomodoro-btn-reset" onclick="resetPomodoroTimer()">🔄 Reset</button>
+                </div>
+                <div class="ambient-box">
+                    <span>🌧️ Suara Hujan (Ambient Relax)</span>
+                    <button class="ambient-btn" id="ambientSoundBtn" onclick="toggleAmbientSound()">Mulai</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Schedule Modal (Add/Edit Class) -->
+    <div class="modal-overlay" id="scheduleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="schedModalTitle">➕ Tambah Jadwal Kelas Kuliah</h2>
+                <button class="modal-close" onclick="closeModal('scheduleModal')">&times;</button>
+            </div>
+            <form id="scheduleForm" onsubmit="handleSaveSchedule(event)">
+                <input type="hidden" id="schedId">
+                <div class="form-group">
+                    <label>Hari Kuliah *</label>
+                    <select id="schedHari" class="custom-select" style="width:100%;" required>
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                        <option value="Sabtu">Sabtu</option>
+                        <option value="Minggu">Minggu</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mata Kuliah *</label>
+                    <input type="text" id="schedMatkul" placeholder="Contoh: Pemrograman Web Lanjut" required list="matkulSuggestions">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Jam Mulai *</label>
+                        <input type="time" id="schedJamMulai" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Jam Selesai *</label>
+                        <input type="time" id="schedJamSelesai" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ruangan / Gedung</label>
+                        <input type="text" id="schedRuangan" placeholder="Contoh: Lab Komputer 3 / Gedung D R.302">
+                    </div>
+                    <div class="form-group">
+                        <label>SKS</label>
+                        <input type="number" id="schedSKS" min="1" max="8" placeholder="Contoh: 3">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Link Kelas Online (Opsional: Zoom / Google Meet)</label>
+                    <input type="url" id="schedLink" placeholder="Contoh: https://meet.google.com/abc-defg-hij">
+                    <span class="hint-text">💡 Tombol masuk kelas langsung muncul di banner kuliah hari ini.</span>
+                </div>
+                <div class="form-group">
+                    <label>Dosen Pengampu</label>
+                    <input type="text" id="schedDosen" placeholder="Contoh: Dr. Budi Santoso, M.Kom">
+                </div>
+                <div class="form-group">
+                    <label>Catatan Tambahan</label>
+                    <input type="text" id="schedCatatan" placeholder="Contoh: Pertemuan praktikum / bawa modul">
+                </div>
+                <div class="modal-actions" style="display:flex;justify-content:space-between;align-items:center;">
+                    <button type="button" class="btn btn-danger" id="schedDeleteModalBtn" style="display:none;width:auto;padding:0.6rem 1.1rem;background:linear-gradient(135deg, #d63031, #e17055);color:white;border:none;border-radius:10px;font-weight:600;font-size:0.85rem;" onclick="handleModalDeleteSchedule()">
+                        🗑️ Hapus Kelas
+                    </button>
+                    <div style="display:flex;gap:0.6rem;margin-left:auto;">
+                        <button type="button" class="btn btn-secondary" style="width:auto;" onclick="closeModal('scheduleModal')">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="width:auto;">💾 Simpan Jadwal</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2 id="previewModalTitle">👁️ Pratinjau File</h2>
+                <button class="modal-close" onclick="closeModal('previewModal')">&times;</button>
+            </div>
+            <div class="preview-viewer" id="previewViewerContent"></div>
+            <div class="modal-actions" style="justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" style="width:auto;" onclick="closeModal('previewModal')">Tutup</button>
+                <button type="button" class="btn btn-primary" style="width:auto;" id="previewDownloadBtn">⬇️ Unduh File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating In-App Notification Toast Container -->
+    <div class="notif-banner" id="notifBanner"></div>
+
+    <script>
+        // ========== PWA Registration & Install Prompt ==========
+        let deferredPrompt = null;
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => {
+                        console.log('Service Worker Registered successfully:', reg.scope);
+                    })
+                    .catch((err) => {
+                        console.log('Service Worker registration failed:', err);
+                    });
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('installAppBtn');
+            if (installBtn) installBtn.style.display = 'inline-flex';
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast('📲 PWA Terpasang', 'Aplikasi berhasil dipasang di perangkat Anda!', 'success');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installAppBtn').style.display = 'none';
+                });
+            } else {
+                showToast('📲 Pasang Aplikasi', 'Buka menu titik tiga (⋮) di Chrome HP Anda lalu pilih "Tambahkan ke Layar Utama" / "Install Aplikasi".', 'warning');
+            }
+        }
+
+        // ========== Audio Synthesizer for Alerts ==========
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playBeep(type = 'success') {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'success') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'warning') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, now);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'urgent') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(750, now);
+                    osc.frequency.setValueAtTime(980, now + 0.12);
+                    osc.frequency.setValueAtTime(750, now + 0.24);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                    osc.start(now);
+                    osc.stop(now + 0.45);
+                }
+            } catch (e) {
+                console.warn('Audio context error:', e);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundToggleBtn');
+            if (soundEnabled) {
+                btn.className = 'sound-toggle active';
+                btn.textContent = '🔊 Suara: ON';
+                playBeep('success');
+            } else {
+                btn.className = 'sound-toggle';
+                btn.textContent = '🔇 Suara: OFF';
+            }
+        }
+
+        // ========== IndexedDB for File Storage ==========
+        const DB_NAME = 'KuliahTaskFilesDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'files';
+        let db = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function saveFileToDB(fileObj) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put(fileObj);
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function getFileFromDB(fileId) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.get(fileId);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function getAllFilesFromDB() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result || []);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function deleteFileFromDB(fileId) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.delete(fileId);
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ========== State ==========
+        let tasks = JSON.parse(localStorage.getItem('kuliahTasks') || '[]');
+        let currentFilter = 'semua';
+        let currentMatkulFilter = 'all';
+        let currentSort = 'deadline-asc';
+        let currentView = 'list';
+        let calendarDate = new Date();
+        let pendingSubtasks = [];
+        let editPendingSubtasks = [];
+        let notifiedTasks = {};
+        let pendingFiles = [];
+        let editPendingFiles = [];
+        let editRemovedFileIds = [];
+        let firestoreDB = null;
+        let unsubscribeFirestore = null;
+
+        // Pomodoro State
+        let pomoMode = 'focus';
+        let pomoTimeLeft = 25 * 60;
+        let pomoTimerInterval = null;
+        let pomoIsRunning = false;
+        let isAmbientPlaying = false;
+        let ambientAudioCtx = null;
+        let ambientSource = null;
+        let ambientGain = null;
+
+        // ========== Init ==========
+        document.addEventListener('DOMContentLoaded', async () => {
+            await openDB();
+            initCloudSync();
+            updateMatkulOptions();
+            renderTasks();
+            renderCalendar();
+            updateStats();
+            checkNotifPermission();
+            setupFileUpload();
+
+            checkDeadlinesRealtime();
+            setInterval(checkDeadlinesRealtime, 15000);
+
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('taskDeadline').min = now.toISOString().slice(0, 16);
+        });
+
+        document.addEventListener('click', () => {
+            initAudio();
+        }, { once: true });
+
+        // ========== Default Firebase Config (From User) ==========
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCZNOFmJ-_uLhWn6Y3DSQ8H7KSLcpuyhAE",
+            authDomain: "tugas-kuliah-12994.firebaseapp.com",
+            databaseURL: "https://tugas-kuliah-12994-default-rtdb.firebaseio.com",
+            projectId: "tugas-kuliah-12994",
+            storageBucket: "tugas-kuliah-12994.firebasestorage.app",
+            messagingSenderId: "823906205377",
+            appId: "1:823906205377:web:b2c23b466e555f0ae01e40",
+            measurementId: "G-JRWWM17ZCB"
+        };
+
+        function parseFirebaseConfig(raw) {
+            if (!raw || !raw.trim()) return DEFAULT_FIREBASE_CONFIG;
+            raw = raw.trim();
+            try {
+                return JSON.parse(raw);
+            } catch (e) {
+                const match = raw.match(/\{[\s\S]*\}/);
+                if (match) {
+                    try {
+                        const obj = new Function('return ' + match[0])();
+                        if (obj && typeof obj === 'object') return obj;
+                    } catch (err) {}
+                }
+            }
+            return null;
+        }
+
+        let realtimeDB = null;
+        let activeSyncRef = null;
+
+        // ========== Firebase Cloud Sync Engine (Realtime Database) ==========
+        function initCloudSync() {
+            let rawConfig = localStorage.getItem('firebaseConfig');
+            let syncUserId = localStorage.getItem('syncUserId');
+
+            if (!syncUserId) {
+                syncUserId = 'tugas_saya';
+                localStorage.setItem('syncUserId', syncUserId);
+            }
+
+            document.getElementById('syncUserId').value = syncUserId;
+            document.getElementById('firebaseConfigInput').value = rawConfig || JSON.stringify(DEFAULT_FIREBASE_CONFIG, null, 2);
+
+            let config = null;
+            if (rawConfig) {
+                config = parseFirebaseConfig(rawConfig);
+            } else {
+                config = DEFAULT_FIREBASE_CONFIG;
+                localStorage.setItem('firebaseConfig', JSON.stringify(DEFAULT_FIREBASE_CONFIG));
+            }
+
+            if (config && syncUserId) {
+                try {
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(config);
+                    }
+                    realtimeDB = firebase.database();
+
+                    const badge = document.getElementById('syncStatusBadge');
+                    const text = document.getElementById('syncStatusText');
+                    
+                    // Listen to Realtime Database changes
+                    if (activeSyncRef) activeSyncRef.off();
+
+                    activeSyncRef = realtimeDB.ref('users/' + syncUserId);
+                    activeSyncRef.on('value', (snapshot) => {
+                        badge.classList.add('online');
+                        text.textContent = '☁️ Sinkron: Online (' + syncUserId + ')';
+
+                        const cloudData = snapshot.val();
+                        if (cloudData) {
+                            if (Array.isArray(cloudData.tasks)) {
+                                tasks = cloudData.tasks;
+                                localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
+                                renderTasks();
+                                updateStats();
+                            }
+                            if (Array.isArray(cloudData.jadwal)) {
+                                jadwalKuliah = cloudData.jadwal;
+                                localStorage.setItem('jadwalKuliah', JSON.stringify(jadwalKuliah));
+                                renderTodayBanner();
+                                renderWeeklySchedule();
+                            }
+                            updateMatkulOptions();
+                        }
+                    }, (error) => {
+                        console.error('Realtime Database sync error:', error);
+                        badge.classList.remove('online');
+                        if (error.code === 'PERMISSION_DENIED') {
+                            text.textContent = '⚠️ Sinkron: Izin Ditolak';
+                            showToast('⚠️ Izin Database Ditolak', 'Pastikan rules di Realtime Database mengizinkan read & write.', 'warning');
+                        } else {
+                            text.textContent = '⚠️ Sinkron: Terputus';
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Firebase Realtime DB init error:', e);
+                    const badge = document.getElementById('syncStatusBadge');
+                    const text = document.getElementById('syncStatusText');
+                    badge.classList.remove('online');
+                    text.textContent = '☁️ Sinkron: Offline';
+                }
+            }
+        }
+
+        async function syncTasksToCloud() {
+            const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
+            if (realtimeDB && syncUserId) {
+                try {
+                    await realtimeDB.ref('users/' + syncUserId).set({
+                        tasks: tasks,
+                        updatedAt: new Date().toISOString()
+                    });
+                } catch (err) {
+                    console.warn('Gagal push ke Realtime Database:', err);
+                }
+            }
+        }
+
+        function openSyncModal() {
+            document.getElementById('syncModal').classList.add('show');
+        }
+
+        function saveSyncSettings() {
+            const userId = document.getElementById('syncUserId').value.trim();
+            const configStr = document.getElementById('firebaseConfigInput').value.trim();
+
+            if (!userId) {
+                showToast('⚠️ Masukkan ID', 'Harap isi ID Sinkronisasi Pribadi.', 'warning');
+                return;
+            }
+
+            localStorage.setItem('syncUserId', userId);
+            
+            const parsed = parseFirebaseConfig(configStr);
+            if (!parsed) {
+                showToast('⚠️ Format Salah', 'Config Firebase tidak valid.', 'danger');
+                return;
+            }
+
+            localStorage.setItem('firebaseConfig', JSON.stringify(parsed));
+            initCloudSync();
+            closeModal('syncModal');
+            showToast('☁️ Sinkronisasi Aktif', 'Laptop dan HP Anda kini terhubung!', 'success');
+        }
+
+        function disconnectSync() {
+            localStorage.removeItem('firebaseConfig');
+            localStorage.removeItem('syncUserId');
+            if (activeSyncRef) activeSyncRef.off();
+            realtimeDB = null;
+            const badge = document.getElementById('syncStatusBadge');
+            const text = document.getElementById('syncStatusText');
+            badge.classList.remove('online');
+            text.textContent = '☁️ Sinkronisasi: Lokal';
+            closeModal('syncModal');
+            showToast('ℹ️ Diputuskan', 'Aplikasi kembali ke mode offline lokal.');
+        }
+
+        // ========== Helper: Is URL or Plain Text ==========
+        function isLinkUrl(str) {
+            if (!str) return false;
+            const trimmed = str.trim();
+            if (/^https?:\/\//i.test(trimmed)) return true;
+            if (/^www\.[a-z0-9\-]+\.[a-z]{2,}/i.test(trimmed)) return true;
+            return false;
+        }
+
+        function formatUrl(str) {
+            const trimmed = str.trim();
+            if (!/^https?:\/\//i.test(trimmed)) {
+                return 'https://' + trimmed;
+            }
+            return trimmed;
+        }
+
+        function getLinkLabel(url) {
+            try {
+                const hostname = new URL(formatUrl(url)).hostname.replace('www.', '');
+                const labels = {
+                    'classroom.google.com': 'Google Classroom',
+                    'docs.google.com': 'Google Docs',
+                    'drive.google.com': 'Google Drive',
+                    'forms.google.com': 'Google Forms',
+                    'elearning.': 'E-Learning',
+                    'lms.': 'LMS Kampus',
+                    'github.com': 'GitHub',
+                    'moodle.': 'Moodle',
+                    'teams.microsoft.com': 'MS Teams'
+                };
+                for (const [key, label] of Object.entries(labels)) {
+                    if (hostname.includes(key)) return label;
+                }
+                return hostname;
+            } catch {
+                return 'Buka Link';
+            }
+        }
+
+        // ========== File Upload Setup ==========
+        function setupFileUpload() {
+            const fileInput = document.getElementById('taskFiles');
+            const uploadArea = document.getElementById('fileUploadArea');
+
+            fileInput.addEventListener('change', (e) => handleFileSelect(e.target.files, 'add'));
+            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+            uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFileSelect(e.dataTransfer.files, 'add');
+            });
+
+            const editFileInput = document.getElementById('editFiles');
+            const editUploadArea = document.getElementById('editFileUploadArea');
+
+            editFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files, 'edit'));
+            editUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); editUploadArea.classList.add('dragover'); });
+            editUploadArea.addEventListener('dragleave', () => editUploadArea.classList.remove('dragover'));
+            editUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                editUploadArea.classList.remove('dragover');
+                handleFileSelect(e.dataTransfer.files, 'edit');
+            });
+        }
+
+        function handleFileSelect(fileList, mode) {
+            const maxSize = 15 * 1024 * 1024; // 15MB
+
+            for (const file of fileList) {
+                if (file.size > maxSize) {
+                    showToast('⚠️ File Terlalu Besar', `"${file.name}" melebihi batas 15MB.`, 'danger');
+                    continue;
+                }
+
+                const fileData = {
+                    id: `file_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    rawFile: file
+                };
+
+                if (mode === 'add') {
+                    pendingFiles.push(fileData);
+                } else {
+                    editPendingFiles.push(fileData);
+                }
+            }
+
+            renderFilePreview(mode);
+        }
+
+        function renderFilePreview(mode) {
+            const files = mode === 'add' ? pendingFiles : editPendingFiles;
+            const container = document.getElementById(mode === 'add' ? 'filePreviewList' : 'editFilePreviewList');
+
+            container.innerHTML = files.map((f, i) => `
+                <div class="file-preview-item">
+                    <span class="file-icon">${getFileIcon(f.name)}</span>
+                    <span class="file-name">${escapeHtml(f.name)}</span>
+                    <span class="file-size">${formatFileSize(f.size)}</span>
+                    <button type="button" class="file-remove" onclick="removePendingFile(${i}, '${mode}')">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function removePendingFile(index, mode) {
+            if (mode === 'add') {
+                pendingFiles.splice(index, 1);
+            } else {
+                editPendingFiles.splice(index, 1);
+            }
+            renderFilePreview(mode);
+        }
+
+        function getFileIcon(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            const icons = {
+                pdf: '📄', doc: '📝', docx: '📝', txt: '📃',
+                xls: '📊', xlsx: '📊', csv: '📊',
+                ppt: '📽️', pptx: '📽️',
+                jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', svg: '🖼️', webp: '🖼️',
+                mp4: '🎬', mov: '🎬', avi: '🎬',
+                mp3: '🎵', wav: '🎵',
+                zip: '📦', rar: '📦', '7z': '📦',
+                py: '🐍', js: '💛', java: '☕', cpp: '⚙️', c: '⚙️',
+                html: '🌐', css: '🎨',
+            };
+            return icons[ext] || '📎';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function updateMatkulOptions() {
+            const fromTasks = tasks.map(t => t.matkul).filter(Boolean);
+            const fromSched = (typeof jadwalKuliah !== 'undefined' && Array.isArray(jadwalKuliah)) ? jadwalKuliah.map(j => j.matkul).filter(Boolean) : [];
+            const matkuls = Array.from(new Set([...fromTasks, ...fromSched])).sort();
+            
+            const datalist = document.getElementById('matkulSuggestions');
+            if (datalist) {
+                datalist.innerHTML = matkuls.map(m => `<option value="${escapeHtml(m)}">`).join('');
+            }
+
+            const filterSelect = document.getElementById('matkulFilter');
+            if (filterSelect) {
+                const current = filterSelect.value;
+                filterSelect.innerHTML = `<option value="all">📚 Semua Mata Kuliah</option>` +
+                    matkuls.map(m => `<option value="${escapeHtml(m)}" ${m === current ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('');
+            }
+        }
+
+        // ========== Subtasks & Group Helpers ==========
+        function toggleGroupInput(mode) {
+            const isKelompok = document.querySelector(`input[name="${mode === 'add' ? 'taskType' : 'editTaskType'}"][value="kelompok"]`).checked;
+            const box = document.getElementById(mode === 'add' ? 'groupMembersInputBox' : 'editGroupMembersInputBox');
+            if (box) box.style.display = isKelompok ? 'block' : 'none';
+        }
+
+        function addSubtask(mode) {
+            const input = document.getElementById(mode === 'add' ? 'newSubtaskInput' : 'editNewSubtaskInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const subtask = {
+                id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                text: text,
+                done: false
+            };
+            if (mode === 'add') {
+                pendingSubtasks.push(subtask);
+            } else {
+                editPendingSubtasks.push(subtask);
+            }
+            input.value = '';
+            renderSubtasksPreview(mode);
+        }
+
+        function removeSubtask(index, mode) {
+            if (mode === 'add') {
+                pendingSubtasks.splice(index, 1);
+            } else {
+                editPendingSubtasks.splice(index, 1);
+            }
+            renderSubtasksPreview(mode);
+        }
+
+        function renderSubtasksPreview(mode) {
+            const list = mode === 'add' ? pendingSubtasks : editPendingSubtasks;
+            const container = document.getElementById(mode === 'add' ? 'subtasksPreviewList' : 'editSubtasksPreviewList');
+            if (!container) return;
+
+            container.innerHTML = list.map((st, i) => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.04);border-radius:8px;font-size:0.75rem;">
+                    <span>• ${escapeHtml(st.text)}</span>
+                    <button type="button" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;line-height:1;" onclick="removeSubtask(${i}, '${mode}')">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function toggleSubtaskDone(taskId, subtaskId, e) {
+            if (e) e.stopPropagation();
+            const task = tasks.find(t => t.id === taskId);
+            if (!task || !task.subtasks) return;
+            const st = task.subtasks.find(s => s.id === subtaskId);
+            if (st) {
+                st.done = !st.done;
+                saveTasks();
+                syncTasksToCloud();
+                renderTasks();
+                if (currentView === 'calendar') renderCalendar();
+            }
+        }
+
+        // ========== Form Submit ==========
+        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Menyimpan...';
+
+            try {
+                const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
+                const fileRefs = [];
+                for (const pf of pendingFiles) {
+                    const dataURL = await readFileAsDataURL(pf.rawFile);
+                    const fileObj = {
+                        id: pf.id,
+                        name: pf.name,
+                        size: pf.size,
+                        type: pf.type,
+                        data: dataURL
+                    };
+                    await saveFileToDB(fileObj);
+                    
+                    if (realtimeDB && syncUserId) {
+                        realtimeDB.ref('user_files/' + syncUserId + '/' + pf.id).set(fileObj).catch(e => console.warn('Cloud file upload error:', e));
+                    }
+
+                    fileRefs.push({ id: pf.id, name: pf.name, size: pf.size, type: pf.type });
+                }
+
+                const taskType = document.querySelector('input[name="taskType"]:checked').value;
+                const members = taskType === 'kelompok' ? document.getElementById('taskMembers').value.trim() : '';
+
+                const task = {
+                    id: Date.now().toString(),
+                    name: document.getElementById('taskName').value.trim(),
+                    matkul: document.getElementById('taskMatkul').value.trim(),
+                    desc: document.getElementById('taskDesc').value.trim(),
+                    deadline: document.getElementById('taskDeadline').value,
+                    priority: document.getElementById('taskPriority').value,
+                    link: document.getElementById('taskLink').value.trim(),
+                    type: taskType,
+                    members: members,
+                    subtasks: [...pendingSubtasks],
+                    files: fileRefs,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                };
+
+                tasks.unshift(task);
+                saveTasks();
+                syncTasksToCloud();
+                updateMatkulOptions();
+                renderTasks();
+                if (currentView === 'calendar') renderCalendar();
+                updateStats();
+
+                e.target.reset();
+                pendingFiles = [];
+                pendingSubtasks = [];
+                document.getElementById('filePreviewList').innerHTML = '';
+                document.getElementById('subtasksPreviewList').innerHTML = '';
+                document.querySelector('input[name="taskType"][value="individu"]').checked = true;
+                toggleGroupInput('add');
+
+                playBeep('success');
+                showToast('✅ Tugas Ditambahkan', `"${task.name}" berhasil disimpan!`, 'success');
+                checkDeadlinesRealtime();
+            } catch (err) {
+                showToast('❌ Gagal', 'Terjadi kesalahan saat menyimpan.', 'danger');
+                console.error(err);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '➕ Tambah Tugas';
+            }
+        });
+
+        // ========== Edit Form ==========
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Menyimpan...';
+
+            try {
+                const id = document.getElementById('editId').value;
+                const task = tasks.find(t => t.id === id);
+                if (!task) return;
+
+                const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
+                for (const fileId of editRemovedFileIds) {
+                    await deleteFileFromDB(fileId);
+                    if (realtimeDB && syncUserId) {
+                        realtimeDB.ref('user_files/' + syncUserId + '/' + fileId).remove().catch(() => {});
+                    }
+                }
+
+                task.files = (task.files || []).filter(f => !editRemovedFileIds.includes(f.id));
+
+                for (const pf of editPendingFiles) {
+                    const dataURL = await readFileAsDataURL(pf.rawFile);
+                    const fileObj = {
+                        id: pf.id,
+                        name: pf.name,
+                        size: pf.size,
+                        type: pf.type,
+                        data: dataURL
+                    };
+                    await saveFileToDB(fileObj);
+                    if (realtimeDB && syncUserId) {
+                        realtimeDB.ref('user_files/' + syncUserId + '/' + pf.id).set(fileObj).catch(() => {});
+                    }
+                    task.files.push({ id: pf.id, name: pf.name, size: pf.size, type: pf.type });
+                }
+
+                task.name = document.getElementById('editName').value.trim();
+                task.matkul = document.getElementById('editMatkul').value.trim();
+                task.desc = document.getElementById('editDesc').value.trim();
+                task.deadline = document.getElementById('editDeadline').value;
+                task.priority = document.getElementById('editPriority').value;
+                task.link = document.getElementById('editLink').value.trim();
+
+                const editType = document.querySelector('input[name="editTaskType"]:checked').value;
+                task.type = editType;
+                task.members = editType === 'kelompok' ? document.getElementById('editMembers').value.trim() : '';
+                task.subtasks = [...editPendingSubtasks];
+
+                saveTasks();
+                syncTasksToCloud();
+                updateMatkulOptions();
+                renderTasks();
+                if (currentView === 'calendar') renderCalendar();
+                updateStats();
+                closeModal('editModal');
+                playBeep('success');
+                showToast('✏️ Tugas Diperbarui', `"${task.name}" berhasil diperbarui!`, 'success');
+
+                checkDeadlinesRealtime();
+            } catch (err) {
+                showToast('❌ Gagal', 'Terjadi kesalahan saat menyimpan.', 'danger');
+                console.error(err);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '💾 Simpan Perubahan';
+            }
+        });
+
+        // ========== Filters & Search ==========
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderTasks();
+            });
+        });
+
+        document.getElementById('matkulFilter').addEventListener('change', (e) => {
+            currentMatkulFilter = e.target.value;
+            renderTasks();
+        });
+
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            renderTasks();
+        });
+
+        document.getElementById('searchInput').addEventListener('input', () => renderTasks());
+
+        // ========== Render ==========
+        function renderTasks() {
+            const container = document.getElementById('taskList');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const now = new Date();
+
+            let filtered = tasks.filter(task => {
+                if (search && !task.name.toLowerCase().includes(search) &&
+                    !task.matkul.toLowerCase().includes(search) &&
+                    !(task.desc && task.desc.toLowerCase().includes(search)) &&
+                    !(task.link && task.link.toLowerCase().includes(search))) return false;
+
+                if (currentMatkulFilter !== 'all' && task.matkul !== currentMatkulFilter) return false;
+
+                const isOverdue = new Date(task.deadline) < now && !task.completed;
+                switch (currentFilter) {
+                    case 'aktif': return !task.completed && !isOverdue;
+                    case 'selesai': return task.completed;
+                    case 'terlambat': return isOverdue;
+                    default: return true;
+                }
+            });
+
+            const priorityOrder = { tinggi: 0, sedang: 1, rendah: 2 };
+            filtered.sort((a, b) => {
+                switch (currentSort) {
+                    case 'deadline-asc': return new Date(a.deadline) - new Date(b.deadline);
+                    case 'deadline-desc': return new Date(b.deadline) - new Date(a.deadline);
+                    case 'priority': return priorityOrder[a.priority] - priorityOrder[b.priority];
+                    case 'name': return a.name.localeCompare(b.name);
+                    default: return 0;
+                }
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="emoji">${search ? '🔍' : currentFilter === 'selesai' ? '🎉' : '📝'}</div>
+                        <h3>${search ? 'Tidak ditemukan tugas' : currentFilter === 'selesai' ? 'Belum ada tugas selesai' : 'Tidak ada tugas'}</h3>
+                        <p>${search ? 'Coba ganti kata kunci atau filter' : 'Tambahkan tugas baru dari form di sebelah kiri'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(task => {
+                const deadline = new Date(task.deadline);
+                const isOverdue = deadline < now && !task.completed;
+                const hoursLeft = (deadline - now) / (1000 * 60 * 60);
+                const isDueSoon = hoursLeft > 0 && hoursLeft <= 24 && !task.completed;
+                const countdown = getCountdown(deadline, task.completed);
+                const files = task.files || [];
+                const rawPlace = (task.link || '').trim();
+                const isUrl = isLinkUrl(rawPlace);
+
+                // Subtasks calculation
+                const subtasks = task.subtasks || [];
+                const hasSubtasks = subtasks.length > 0;
+                const doneCount = subtasks.filter(s => s.done).length;
+                const percent = hasSubtasks ? Math.round((doneCount / subtasks.length) * 100) : 0;
+
+                return `
+                    <div class="task-item ${task.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''} ${isDueSoon ? 'due-soon' : ''} priority-${task.priority}" data-id="${task.id}">
+                        <div class="task-checkbox" onclick="toggleTask('${task.id}')" title="${task.completed ? 'Tandai belum selesai' : 'Tandai selesai'}"></div>
+                        <div class="task-content">
+                            <div class="task-name">${escapeHtml(task.name)}</div>
+                            ${task.desc ? `<div class="task-desc">${escapeHtml(task.desc)}</div>` : ''}
+                            <div class="task-meta">
+                                <span class="tag tag-matkul">📘 ${escapeHtml(task.matkul)}</span>
+                                <span class="tag ${isOverdue ? 'tag-overdue' : isDueSoon ? 'tag-due-soon' : 'tag-deadline'}">
+                                    📅 ${formatDate(deadline)}
+                                </span>
+                                <span class="tag tag-priority ${task.priority}">
+                                    ${task.priority === 'tinggi' ? '🔥' : task.priority === 'sedang' ? '⚡' : '🍃'} ${task.priority}
+                                </span>
+                                ${task.type === 'kelompok' ? `<span class="tag tag-group">👥 Kelompok</span>` : ''}
+                                ${task.type === 'kelompok' && task.members ? `<span class="group-member-tag" title="Anggota">👤 ${escapeHtml(task.members)}</span>` : ''}
+                                ${countdown ? `<span class="countdown ${countdown.urgent ? 'urgent' : ''}">${countdown.text}</span>` : ''}
+                            </div>
+
+                            ${hasSubtasks ? `
+                                <div class="subtasks-box">
+                                    <div class="subtasks-header">
+                                        <span>📝 Langkah Pengerjaan (${doneCount}/${subtasks.length})</span>
+                                        <span style="font-weight:700;color:var(--accent);">${percent}%</span>
+                                    </div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill" style="width: ${percent}%;"></div>
+                                    </div>
+                                    <div class="subtask-items-list">
+                                        ${subtasks.map(s => `
+                                            <label class="subtask-item ${s.done ? 'done' : ''}" onclick="event.stopPropagation();">
+                                                <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleSubtaskDone('${task.id}', '${s.id}', event)">
+                                                <span>${escapeHtml(s.text)}</span>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${(rawPlace || files.length > 0) ? `
+                                <div class="task-footer-info">
+                                    ${rawPlace ? (isUrl ? `
+                                        <div class="task-link-box">
+                                            <a href="${escapeHtml(formatUrl(rawPlace))}" target="_blank" rel="noopener" class="task-link" title="Buka ${escapeHtml(rawPlace)}">
+                                                🔗 ${getLinkLabel(rawPlace)}
+                                            </a>
+                                            <button type="button" class="task-link-copy" onclick="copyText('${escapeHtml(rawPlace)}')" title="Salin link">📋</button>
+                                        </div>
+                                    ` : `
+                                        <div class="task-place-badge" title="Tempat Pengumpulan">
+                                            📍 <strong>Tempat:</strong> ${escapeHtml(rawPlace)}
+                                            <button type="button" class="task-link-copy" onclick="copyText('${escapeHtml(rawPlace)}')" title="Salin teks" style="border:none;margin-left:0.2rem;padding:0;">📋</button>
+                                        </div>
+                                    `) : ''}
+                                    ${files.map(f => `
+                                        <div class="task-file-chip" title="${escapeHtml(f.name)} (${formatFileSize(f.size)})">
+                                            <span onclick="downloadFile('${f.id}', '${escapeHtml(f.name)}')">
+                                                ${getFileIcon(f.name)} ${escapeHtml(f.name)}
+                                            </span>
+                                            <button type="button" class="task-file-preview-btn" onclick="previewFile('${f.id}')" title="Pratinjau File">👁️</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn-icon gcal" onclick="addToGoogleCalendar('${task.id}')" title="Tambahkan ke Google Calendar">📅</button>
+                            <button class="btn-icon edit" onclick="editTask('${task.id}')" title="Edit">✏️</button>
+                            <button class="btn-icon delete" onclick="deleteTask('${task.id}')" title="Hapus">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('📋 Disalin', `"${text}" berhasil disalin ke clipboard!`, 'success');
+            }).catch(() => {
+                showToast('📋 Info', text);
+            });
+        }
+
+        // ========== Google Calendar Sync ==========
+        function addToGoogleCalendar(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const deadlineDate = new Date(task.deadline);
+            if (isNaN(deadlineDate.getTime())) {
+                showToast('⚠️ Gagal', 'Format deadline tidak valid.', 'danger');
+                return;
+            }
+
+            const startDate = new Date(deadlineDate.getTime() - 60 * 60 * 1000);
+
+            function toGCalIso(d) {
+                return d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+            }
+
+            const startIso = toGCalIso(startDate);
+            const endIso = toGCalIso(deadlineDate);
+
+            let details = `📘 Mata Kuliah: ${task.matkul}\n⚡ Prioritas: ${task.priority.toUpperCase()}\n`;
+            if (task.desc) details += `📝 Deskripsi:\n${task.desc}\n\n`;
+            if (task.link) details += `📍 Tempat / Link Pengumpulan: ${task.link}\n\n`;
+            if (task.type === 'kelompok' && task.members) details += `👥 Anggota Kelompok: ${task.members}\n\n`;
+            if (task.subtasks && task.subtasks.length > 0) {
+                details += '📋 Langkah Pengerjaan:\n' + task.subtasks.map(s => `${s.done ? '[✓]' : '[ ]'} ${s.text}`).join('\n') + '\n';
+            }
+
+            const title = `[DEADLINE] ${task.name} - ${task.matkul}`;
+            const location = task.link || '';
+            const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startIso}/${endIso}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
+
+            window.open(gcalUrl, '_blank');
+            showToast('📅 Google Calendar', 'Membuka Google Calendar untuk menyimpan jadwal tugas...', 'success');
+        }
+
+        // ========== Calendar View Implementation ==========
+        function switchView(view) {
+            currentView = view;
+            const btnList = document.getElementById('viewListBtn');
+            const btnCal = document.getElementById('viewCalBtn');
+            const btnSched = document.getElementById('viewSchedBtn');
+            const taskList = document.getElementById('taskList');
+            const filterBar = document.querySelector('.filter-bar');
+            const calSection = document.getElementById('calendarSection');
+            const schedSection = document.getElementById('scheduleSection');
+            const sectionTitle = document.querySelector('.section-title');
+
+            if (btnList) btnList.classList.toggle('active', view === 'list');
+            if (btnCal) btnCal.classList.toggle('active', view === 'calendar');
+            if (btnSched) btnSched.classList.toggle('active', view === 'schedule');
+
+            if (view === 'calendar') {
+                if (sectionTitle) sectionTitle.textContent = '📅 Kalender Deadline Tugas';
+                if (taskList) taskList.style.display = 'none';
+                if (filterBar) filterBar.style.display = 'none';
+                if (calSection) calSection.style.display = 'block';
+                if (schedSection) schedSection.style.display = 'none';
+                renderCalendar();
+            } else if (view === 'schedule') {
+                if (sectionTitle) sectionTitle.textContent = '🎓 Jadwal Kuliah Mingguan';
+                if (taskList) taskList.style.display = 'none';
+                if (filterBar) filterBar.style.display = 'none';
+                if (calSection) calSection.style.display = 'none';
+                if (schedSection) schedSection.style.display = 'block';
+                renderWeeklySchedule();
+                if (schedSection) {
+                    schedSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            } else {
+                if (sectionTitle) sectionTitle.textContent = '📋 Daftar Tugas';
+                if (taskList) taskList.style.display = 'flex';
+                if (filterBar) filterBar.style.display = 'flex';
+                if (calSection) calSection.style.display = 'none';
+                if (schedSection) schedSection.style.display = 'none';
+                renderTasks();
+            }
+        }
+
+        function changeMonth(delta) {
+            calendarDate.setMonth(calendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function goToToday() {
+            calendarDate = new Date();
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const titleEl = document.getElementById('calendarMonthYear');
+            if (!grid || !titleEl) return;
+
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+
+            const monthNames = [
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ];
+            titleEl.textContent = `📅 ${monthNames[month]} ${year}`;
+
+            const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            let html = dayNames.map(d => `<div class="calendar-day-name">${d}</div>`).join('');
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDaysCurrent = new Date(year, month + 1, 0).getDate();
+            const totalDaysPrev = new Date(year, month, 0).getDate();
+
+            const today = new Date();
+            const isCurrentMonthYear = today.getFullYear() === year && today.getMonth() === month;
+
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const dayNum = totalDaysPrev - i;
+                html += `
+                    <div class="calendar-cell other-month">
+                        <div class="calendar-cell-header">${dayNum}</div>
+                    </div>
+                `;
+            }
+
+            for (let day = 1; day <= totalDaysCurrent; day++) {
+                const isToday = isCurrentMonthYear && today.getDate() === day;
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const daysTasks = tasks.filter(t => {
+                    if (!t.deadline) return false;
+                    return t.deadline.startsWith(dateStr);
+                });
+
+                html += `
+                    <div class="calendar-cell ${isToday ? 'today' : ''}" onclick="filterByCalendarDate('${dateStr}')">
+                        <div class="calendar-cell-header">
+                            <span>${day}</span>
+                            ${isToday ? '<span style="font-size:0.6rem;color:var(--accent);">Hari Ini</span>' : ''}
+                        </div>
+                        <div class="calendar-tasks">
+                            ${daysTasks.map(t => `
+                                <div class="calendar-task-chip priority-${t.priority} ${t.completed ? 'completed' : ''}" title="${escapeHtml(t.name)} (${t.matkul})">
+                                    ${escapeHtml(t.name)}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const totalRendered = firstDayIndex + totalDaysCurrent;
+            const remaining = (totalRendered % 7 === 0) ? 0 : 7 - (totalRendered % 7);
+            for (let i = 1; i <= remaining; i++) {
+                html += `
+                    <div class="calendar-cell other-month">
+                        <div class="calendar-cell-header">${i}</div>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function filterByCalendarDate(dateStr) {
+            const count = tasks.filter(t => t.deadline && t.deadline.startsWith(dateStr)).length;
+            if (count > 0) {
+                switchView('list');
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                showToast('📅 Jadwal Tugas', `Menampilkan tugas pada tanggal ${dateStr} (${count} tugas)`);
+            } else {
+                showToast('📅 Tanggal ' + dateStr, 'Tidak ada deadline tugas pada tanggal ini.');
+            }
+        }
+
+        // ========== Pomodoro Focus Timer ==========
+        function openPomodoroModal() {
+            const select = document.getElementById('pomodoroTaskSelect');
+            if (select) {
+                const activeTasks = tasks.filter(t => !t.completed);
+                select.innerHTML = '<option value="">-- Bebas / Tanpa Tugas Spesifik --</option>' +
+                    activeTasks.map(t => `<option value="${t.id}">${escapeHtml(t.name)} (${escapeHtml(t.matkul)})</option>`).join('');
+            }
+            updatePomodoroDisplay();
+            document.getElementById('pomodoroModal').classList.add('show');
+        }
+
+        function setPomodoroMode(mode) {
+            pomoMode = mode;
+            document.querySelectorAll('.pomodoro-mode-btn').forEach(b => b.classList.remove('active'));
+            if (mode === 'focus') {
+                pomoTimeLeft = 25 * 60;
+                document.getElementById('pomoModeFocus').classList.add('active');
+            } else if (mode === 'short') {
+                pomoTimeLeft = 5 * 60;
+                document.getElementById('pomoModeShort').classList.add('active');
+            } else if (mode === 'long') {
+                pomoTimeLeft = 15 * 60;
+                document.getElementById('pomoModeLong').classList.add('active');
+            }
+            pausePomodoroTimer();
+            updatePomodoroDisplay();
+        }
+
+        function updatePomodoroDisplay() {
+            const mins = Math.floor(pomoTimeLeft / 60);
+            const secs = pomoTimeLeft % 60;
+            const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            const display = document.getElementById('pomodoroTimerDisplay');
+            if (display) display.textContent = formatted;
+        }
+
+        function togglePomodoroTimer() {
+            if (pomoIsRunning) {
+                pausePomodoroTimer();
+            } else {
+                startPomodoroTimer();
+            }
+        }
+
+        function startPomodoroTimer() {
+            pomoIsRunning = true;
+            const btn = document.getElementById('pomodoroStartBtn');
+            if (btn) btn.textContent = '⏸ Jeda';
+
+            if (pomoTimerInterval) clearInterval(pomoTimerInterval);
+            pomoTimerInterval = setInterval(() => {
+                if (pomoTimeLeft > 0) {
+                    pomoTimeLeft--;
+                    updatePomodoroDisplay();
+                } else {
+                    clearInterval(pomoTimerInterval);
+                    pomoIsRunning = false;
+                    playBeep('urgent');
+
+                    const taskSelect = document.getElementById('pomodoroTaskSelect');
+                    const selectedTaskName = taskSelect && taskSelect.selectedOptions[0] ? taskSelect.selectedOptions[0].text : '';
+
+                    if (pomoMode === 'focus') {
+                        showToast('🎉 Sesi Fokus Selesai!', `Kerja bagus! Waktunya rehat santai 5 menit. ${selectedTaskName}`, 'success');
+                        sendSystemNotification('🎉 Sesi Fokus Pomodoro Selesai!', 'Waktunya istirahat 5 menit!');
+                        setPomodoroMode('short');
+                    } else {
+                        showToast('🔔 Waktu Istirahat Selesai!', 'Siap untuk fokus belajar lagi? Semangat!', 'warning');
+                        sendSystemNotification('🔔 Waktu Istirahat Selesai!', 'Ayo lanjut fokus belajar!');
+                        setPomodoroMode('focus');
+                    }
+                }
+            }, 1000);
+        }
+
+        function pausePomodoroTimer() {
+            pomoIsRunning = false;
+            if (pomoTimerInterval) clearInterval(pomoTimerInterval);
+            const btn = document.getElementById('pomodoroStartBtn');
+            if (btn) btn.textContent = '▶ Mulai';
+        }
+
+        function resetPomodoroTimer() {
+            pausePomodoroTimer();
+            if (pomoMode === 'focus') pomoTimeLeft = 25 * 60;
+            else if (pomoMode === 'short') pomoTimeLeft = 5 * 60;
+            else if (pomoMode === 'long') pomoTimeLeft = 15 * 60;
+            updatePomodoroDisplay();
+        }
+
+        // ========== Ambient Rain Noise Generator (Web Audio API) ==========
+        function toggleAmbientSound() {
+            const btn = document.getElementById('ambientSoundBtn');
+            if (isAmbientPlaying) {
+                stopAmbientSound();
+                if (btn) {
+                    btn.classList.remove('active');
+                    btn.textContent = 'Mulai';
+                }
+            } else {
+                startAmbientSound();
+                if (btn) {
+                    btn.classList.add('active');
+                    btn.textContent = 'Berhenti ⏸';
+                }
+            }
+        }
+
+        function startAmbientSound() {
+            try {
+                if (!ambientAudioCtx) {
+                    ambientAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (ambientAudioCtx.state === 'suspended') {
+                    ambientAudioCtx.resume();
+                }
+
+                const bufferSize = ambientAudioCtx.sampleRate * 5;
+                const noiseBuffer = ambientAudioCtx.createBuffer(1, bufferSize, ambientAudioCtx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    b0 = 0.99886 * b0 + white * 0.0555179;
+                    b1 = 0.99332 * b1 + white * 0.0750759;
+                    b2 = 0.96900 * b2 + white * 0.1538520;
+                    b3 = 0.86650 * b3 + white * 0.3104856;
+                    b4 = 0.55000 * b4 + white * 0.5329522;
+                    b5 = -0.7616 * b5 - white * 0.0168980;
+                    output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.04;
+                    b6 = white * 0.115926;
+                }
+
+                ambientSource = ambientAudioCtx.createBufferSource();
+                ambientSource.buffer = noiseBuffer;
+                ambientSource.loop = true;
+
+                const filter = ambientAudioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, ambientAudioCtx.currentTime);
+
+                ambientGain = ambientAudioCtx.createGain();
+                ambientGain.gain.setValueAtTime(0.08, ambientAudioCtx.currentTime);
+
+                ambientSource.connect(filter);
+                filter.connect(ambientGain);
+                ambientGain.connect(ambientAudioCtx.destination);
+
+                ambientSource.start();
+                isAmbientPlaying = true;
+            } catch (err) {
+                console.warn('Ambient sound error:', err);
+            }
+        }
+
+        function stopAmbientSound() {
+            if (ambientSource) {
+                try { ambientSource.stop(); } catch (e) {}
+                ambientSource.disconnect();
+                ambientSource = null;
+            }
+            isAmbientPlaying = false;
+        }
+
+        // ========== Helper to Get File from Local or Cloud ==========
+        async function getOrFetchFile(fileId) {
+            // 1. Check local IndexedDB
+            let fileObj = await getFileFromDB(fileId).catch(() => null);
+            if (fileObj) return fileObj;
+
+            // 2. Fetch from Firebase Cloud Realtime Database if missing locally
+            const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
+            if (realtimeDB && syncUserId) {
+                showToast('⏳ Mengambil File...', 'Mengunduh file dari cloud...', 'warning');
+                try {
+                    const snapshot = await realtimeDB.ref('user_files/' + syncUserId + '/' + fileId).once('value');
+                    const cloudFile = snapshot.val();
+                    if (cloudFile && cloudFile.data) {
+                        // Cache locally in this device's IndexedDB
+                        await saveFileToDB(cloudFile).catch(() => {});
+                        return cloudFile;
+                    }
+                } catch (err) {
+                    console.error('Fetch file from cloud error:', err);
+                }
+            }
+            return null;
+        }
+
+        // ========== Preview & Download File ==========
+        async function previewFile(fileId) {
+            try {
+                const fileObj = await getOrFetchFile(fileId);
+                if (!fileObj) {
+                    showToast('⚠️ File Tidak Ditemukan', 'File belum selesai terunggah ke cloud atau sudah dihapus.', 'danger');
+                    return;
+                }
+
+                const title = document.getElementById('previewModalTitle');
+                title.textContent = `👁️ ${fileObj.name}`;
+
+                const viewer = document.getElementById('previewViewerContent');
+                viewer.innerHTML = '';
+
+                const ext = fileObj.name.split('.').pop().toLowerCase();
+                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext);
+                const isPDF = ext === 'pdf';
+                const isText = ['txt', 'csv', 'json', 'md', 'py', 'js', 'html', 'css'].includes(ext);
+
+                if (isImage) {
+                    viewer.innerHTML = `<img src="${fileObj.data}" alt="${escapeHtml(fileObj.name)}">`;
+                } else if (isPDF) {
+                    viewer.innerHTML = `<iframe src="${fileObj.data}"></iframe>`;
+                } else if (isText) {
+                    try {
+                        const base64Data = fileObj.data.split(',')[1];
+                        const text = atob(base64Data);
+                        viewer.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
+                    } catch {
+                        viewer.innerHTML = `<p style="color:var(--text-muted);">Tidak dapat menampilkan teks secara langsung.</p>`;
+                    }
+                } else {
+                    viewer.innerHTML = `
+                        <div style="text-align:center;padding:2rem;">
+                            <div style="font-size:3rem;margin-bottom:0.8rem;">${getFileIcon(fileObj.name)}</div>
+                            <p style="color:var(--text-muted);margin-bottom:1rem;">Format file ini tidak mendukung pratinjau browser langsung. Silakan klik tombol Unduh.</p>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('previewDownloadBtn').onclick = () => downloadFile(fileId, fileObj.name);
+                document.getElementById('previewModal').classList.add('show');
+            } catch (err) {
+                showToast('❌ Gagal Membuka File', 'Terjadi error.', 'danger');
+                console.error(err);
+            }
+        }
+
+        async function downloadFile(fileId, fileName) {
+            try {
+                const fileObj = await getOrFetchFile(fileId);
+                if (!fileObj) {
+                    showToast('⚠️ File Tidak Ditemukan', 'File belum selesai terunggah ke cloud atau sudah dihapus.', 'danger');
+                    return;
+                }
+
+                const a = document.createElement('a');
+                a.href = fileObj.data;
+                a.download = fileObj.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (err) {
+                showToast('❌ Gagal', 'Gagal mengunduh file.', 'danger');
+                console.error(err);
+            }
+        }
+
+        // ========== Task Actions ==========
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+                syncTasksToCloud();
+                renderTasks();
+                updateStats();
+                checkDeadlinesRealtime();
+                if (task.completed) {
+                    playBeep('success');
+                    showToast('🎉 Tugas Selesai!', `"${task.name}" telah diselesaikan! Kerja bagus! 💪`, 'success');
+                }
+            }
+        }
+
+        async function deleteTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task && confirm(`Hapus tugas "${task.name}"?\nSemua file yang disimpan juga akan dihapus.`)) {
+                const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
+                for (const f of (task.files || [])) {
+                    await deleteFileFromDB(f.id).catch(() => {});
+                    if (realtimeDB && syncUserId) {
+                        realtimeDB.ref('user_files/' + syncUserId + '/' + f.id).remove().catch(() => {});
+                    }
+                }
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+                syncTasksToCloud();
+                updateMatkulOptions();
+                renderTasks();
+                updateStats();
+                checkDeadlinesRealtime();
+                showToast('🗑️ Tugas Dihapus', `"${task.name}" telah dihapus.`);
+            }
+        }
+
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            editPendingFiles = [];
+            editRemovedFileIds = [];
+            editPendingSubtasks = JSON.parse(JSON.stringify(task.subtasks || []));
+            renderSubtasksPreview('edit');
+
+            const isKelompok = task.type === 'kelompok';
+            const radKelompok = document.getElementById('editTypeKelompok');
+            const radIndividu = document.getElementById('editTypeIndividu');
+            if (radKelompok && radIndividu) {
+                radKelompok.checked = isKelompok;
+                radIndividu.checked = !isKelompok;
+            }
+            document.getElementById('editMembers').value = task.members || '';
+            toggleGroupInput('edit');
+
+            document.getElementById('editId').value = task.id;
+            document.getElementById('editName').value = task.name;
+            document.getElementById('editMatkul').value = task.matkul;
+            document.getElementById('editDesc').value = task.desc || '';
+            document.getElementById('editDeadline').value = task.deadline;
+            document.getElementById('editPriority').value = task.priority;
+            document.getElementById('editLink').value = task.link || '';
+
+            const existingContainer = document.getElementById('editExistingFiles');
+            const files = task.files || [];
+            if (files.length > 0) {
+                existingContainer.innerHTML = files.map(f => `
+                    <div class="file-preview-item" id="existing-file-${f.id}">
+                        <span class="file-icon">${getFileIcon(f.name)}</span>
+                        <span class="file-name">${escapeHtml(f.name)}</span>
+                        <span class="file-size">${formatFileSize(f.size)}</span>
+                        <button type="button" class="file-remove" onclick="removeExistingFile('${f.id}')" title="Hapus file">&times;</button>
+                    </div>
+                `).join('');
+            } else {
+                existingContainer.innerHTML = '<p style="font-size:0.75rem;color:var(--text-muted);">Tidak ada file</p>';
+            }
+
+            document.getElementById('editFilePreviewList').innerHTML = '';
+            document.getElementById('editFiles').value = '';
+
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function removeExistingFile(fileId) {
+            editRemovedFileIds.push(fileId);
+            const el = document.getElementById(`existing-file-${fileId}`);
+            if (el) {
+                el.style.opacity = '0.3';
+                el.style.textDecoration = 'line-through';
+                el.querySelector('.file-remove').textContent = '↩️';
+                el.querySelector('.file-remove').onclick = () => undoRemoveFile(fileId);
+            }
+        }
+
+        function undoRemoveFile(fileId) {
+            editRemovedFileIds = editRemovedFileIds.filter(id => id !== fileId);
+            const el = document.getElementById(`existing-file-${fileId}`);
+            if (el) {
+                el.style.opacity = '1';
+                el.style.textDecoration = 'none';
+                el.querySelector('.file-remove').textContent = '×';
+                el.querySelector('.file-remove').onclick = () => removeExistingFile(fileId);
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            if (modalId === 'editModal') {
+                editPendingFiles = [];
+                editRemovedFileIds = [];
+                editPendingSubtasks = [];
+            }
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('show');
+            });
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
+            }
+        });
+
+        // ========== Stats ==========
+        function updateStats() {
+            const now = new Date();
+            const total = tasks.length;
+            const done = tasks.filter(t => t.completed).length;
+            const overdue = tasks.filter(t => new Date(t.deadline) < now && !t.completed).length;
+            const active = total - done - overdue;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statActive').textContent = Math.max(0, active);
+            document.getElementById('statDone').textContent = done;
+            document.getElementById('statOverdue').textContent = overdue;
+        }
+
+        // ========== Background & System Notifications ==========
+        function requestNotifPermission() {
+            if (!('Notification' in window)) {
+                showToast('⚠️ Info Notifikasi', 'Browser ini membatasi Web Notification. Pasang PWA ke Layar Utama agar notifikasi sistem aktif!', 'warning');
+                return;
+            }
+            try {
+                Notification.requestPermission().then(permission => {
+                    checkNotifPermission();
+                    if (permission === 'granted') {
+                        playBeep('success');
+                        showToast('🔔 Notifikasi HP Aktif', 'Notifikasi sistem Android/Windows berhasil diizinkan!', 'success');
+                        sendSystemNotification('📚 Pengingat Tugas Kuliah', 'Notifikasi deadline berhasil diaktifkan di HP Anda!');
+                    }
+                }).catch(() => {
+                    showToast('ℹ️ Notifikasi Web', 'Notifikasi pop-up layar & alarm suara tetap selalu aktif!', 'warning');
+                });
+            } catch (err) {
+                showToast('ℹ️ Notifikasi Web', 'Notifikasi layar & alarm suara tetap aktif!', 'warning');
+            }
+        }
+
+        function checkNotifPermission() {
+            const btn = document.getElementById('notifBtn');
+            if (!('Notification' in window)) {
+                btn.textContent = '🔔 Notifikasi Layar: ON';
+                btn.classList.add('granted');
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                btn.textContent = '✅ Notifikasi HP: Aktif';
+                btn.classList.add('granted');
+            } else if (Notification.permission === 'denied') {
+                btn.textContent = '🔔 Notifikasi Layar: ON';
+            }
+        }
+
+        function sendSystemNotification(title, body) {
+            // Trigger native Service Worker notification (Supports background notification on Android PWA)
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    action: 'SHOW_NOTIFICATION',
+                    title: title,
+                    body: body
+                });
+            } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                try {
+                    new Notification(title, {
+                        body: body,
+                        icon: './icon-192.png',
+                        badge: './icon-192.png'
+                    });
+                } catch (e) {
+                    console.log('Notification fallback');
+                }
+            }
+        }
+
+        function testNotificationAlert() {
+            playBeep('urgent');
+            showToast('🚨 Tes Notifikasi Pengingat', 'Ini adalah simulasi alarm pengingat deadline! Suara dan pop-up berfungsi normal.', 'danger');
+            sendSystemNotification('🚨 Tes Notifikasi Deadline', 'Pengingat tugas kuliah berjalan normal!');
+        }
+
+        
+        // ========== JADWAL KULIAH MINGGUAN & BANNER HARI INI ==========
+        const DEFAULT_SAMPLE_SCHEDULE = [
+            {
+                id: 'sched_sample_1',
+                hari: 'Senin',
+                matkul: 'Kecerdasan Buatan',
+                jamMulai: '08:00',
+                jamSelesai: '10:30',
+                ruangan: 'Lab Komputer 2',
+                linkOnline: '',
+                dosen: 'Dr. Hendra, M.Kom',
+                sks: 3,
+                catatan: 'Praktikum Python & Machine Learning'
+            },
+            {
+                id: 'sched_sample_2',
+                hari: 'Rabu',
+                matkul: 'Pemrograman Web',
+                jamMulai: '10:45',
+                jamSelesai: '13:15',
+                ruangan: 'Gedung D Ruang 304',
+                linkOnline: 'https://meet.google.com',
+                dosen: 'Siti Rahma, M.T',
+                sks: 3,
+                catatan: 'Pertemuan hybrid'
+            },
+            {
+                id: 'sched_sample_3',
+                hari: 'Kamis',
+                matkul: 'Basis Data Lanjut',
+                jamMulai: '13:30',
+                jamSelesai: '15:10',
+                ruangan: 'Gedung C Ruang 201',
+                linkOnline: '',
+                dosen: 'Agus Setiawan, M.Cs',
+                sks: 2,
+                catatan: 'Materi SQL indexing'
+            }
+        ];
+
+        let jadwalKuliah = [];
+        try {
+            const savedSched = localStorage.getItem('jadwalKuliah');
+            jadwalKuliah = savedSched ? JSON.parse(savedSched) : DEFAULT_SAMPLE_SCHEDULE;
+        } catch(e) {
+            jadwalKuliah = DEFAULT_SAMPLE_SCHEDULE;
+        }
+
+        let activeScheduleDayFilter = 'semua';
+        let notifiedClassAlerts = {};
+
+        const INDO_DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const INDO_MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        function getTodayIndoName() {
+            return INDO_DAYS[new Date().getDay()];
+        }
+
+        function formatFullDateIndo(date = new Date()) {
+            return `${INDO_DAYS[date.getDay()]}, ${date.getDate()} ${INDO_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        function saveJadwal() {
+            localStorage.setItem('jadwalKuliah', JSON.stringify(jadwalKuliah));
+            renderTodayBanner();
+            renderWeeklySchedule(activeScheduleDayFilter);
+            updateMatkulOptions();
+
+            const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
+            if (realtimeDB && syncUserId) {
+                realtimeDB.ref('users/' + syncUserId + '/jadwal').set(jadwalKuliah).catch(e => {
+                    console.warn('Gagal sync jadwal ke Realtime Database:', e);
+                });
+            }
+        }
+
+        function renderTodayBanner() {
+            const banner = document.getElementById('todayScheduleBanner');
+            if (!banner) return;
+
+            const todayName = getTodayIndoName();
+            const todayClasses = jadwalKuliah
+                .filter(j => j.hari === todayName)
+                .sort((a, b) => a.jamMulai.localeCompare(b.jamMulai));
+
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            let classesHTML = '';
+
+            if (todayClasses.length === 0) {
+                classesHTML = `
+                    <div class="today-empty-card">
+                        <span style="font-size:1.4rem;">🎉</span>
+                        <div>
+                            <strong>Tidak ada jadwal kuliah hari ini!</strong>
+                            <div style="font-size:0.75rem;margin-top:0.15rem;color:var(--text-muted);">
+                                Waktu luang yang bagus untuk mencicil tugas atau beristirahat.
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                classesHTML = todayClasses.map(cls => {
+                    const [startH, startM] = cls.jamMulai.split(':').map(Number);
+                    const [endH, endM] = cls.jamSelesai.split(':').map(Number);
+                    const startTotal = startH * 60 + startM;
+                    const endTotal = endH * 60 + endM;
+
+                    let statusClass = 'status-upcoming';
+                    let statusLabel = `⏰ Jam ${cls.jamMulai}`;
+                    let cardOngoingClass = '';
+
+                    if (currentMinutes >= startTotal && currentMinutes <= endTotal) {
+                        statusClass = 'status-ongoing';
+                        statusLabel = '<span class="pulse-dot"></span> Sedang Berlangsung';
+                        cardOngoingClass = 'ongoing';
+                    } else if (currentMinutes < startTotal && (startTotal - currentMinutes) <= 60) {
+                        statusClass = 'status-upcoming';
+                        statusLabel = `⏳ Mulai ${startTotal - currentMinutes} mnt lagi`;
+                    } else if (currentMinutes > endTotal) {
+                        statusClass = 'status-finished';
+                        statusLabel = '✔️ Selesai Hari Ini';
+                    }
+
+                    const onlineBtn = cls.linkOnline ? `
+                        <a href="${escapeHtml(cls.linkOnline)}" target="_blank" class="btn-class-action btn-class-link">
+                            🔗 Masuk Kelas
+                        </a>
+                    ` : '';
+
+                    return `
+                        <div class="today-class-card ${cardOngoingClass}">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span class="class-status-badge ${statusClass}">${statusLabel}</span>
+                                <div style="display:flex;align-items:center;gap:0.3rem;">
+                                    ${cls.sks ? `<span style="font-size:0.7rem;font-weight:700;color:var(--accent);margin-right:0.2rem;">${cls.sks} SKS</span>` : ''}
+                                    <button type="button" class="btn-icon-sched" onclick="openEditScheduleModal('${cls.id}')" title="Edit Jadwal Kelas">✏️</button>
+                                    <button type="button" class="btn-icon-sched delete" onclick="deleteSchedule('${cls.id}')" title="Hapus Jadwal Kelas">🗑️</button>
+                                </div>
+                            </div>
+                            <div class="today-class-name">${escapeHtml(cls.matkul)}</div>
+                            <div class="today-class-meta">
+                                <div class="today-class-meta-row">
+                                    <span>⏰ ${cls.jamMulai} - ${cls.jamSelesai} WIB</span>
+                                </div>
+                                <div class="today-class-meta-row">
+                                    <span>🏢 ${escapeHtml(cls.ruangan || 'Ruang belum diatur')}</span>
+                                </div>
+                                ${cls.dosen ? `<div class="today-class-meta-row"><span>👤 ${escapeHtml(cls.dosen)}</span></div>` : ''}
+                            </div>
+                            <div class="today-class-actions">
+                                ${onlineBtn}
+                                <button type="button" class="btn-class-action btn-class-task" onclick="quickAddTaskForMatkul('${escapeHtml(cls.matkul)}')">
+                                    ➕ Catat Tugas
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            banner.innerHTML = `
+                <div class="today-banner">
+                    <div class="today-banner-header">
+                        <div class="today-banner-title">
+                            <span>🎓</span>
+                            <span>Kuliah Hari Ini</span>
+                            <span class="date-badge">${formatFullDateIndo()}</span>
+                        </div>
+                        <div class="today-banner-actions">
+                            <button class="btn btn-secondary btn-tiny" onclick="openAddScheduleModal('${todayName}')" title="Tambah kelas untuk hari ini">
+                                ➕ Tambah Kelas
+                            </button>
+                            <button class="btn btn-secondary btn-tiny" onclick="switchView('schedule')" title="Buka jadwal kuliah mingguan lengkap">
+                                📅 Jadwal Mingguan
+                            </button>
+                        </div>
+                    </div>
+                    <div class="today-classes-container">
+                        ${classesHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterScheduleDay(day) {
+            activeScheduleDayFilter = day;
+            const buttons = document.querySelectorAll('#scheduleDayFilters .filter-btn');
+            buttons.forEach(btn => {
+                const text = btn.textContent.trim();
+                if (day === 'semua') {
+                    btn.classList.toggle('active', text === 'Semua Hari');
+                } else {
+                    btn.classList.toggle('active', text === day);
+                }
+            });
+            renderWeeklySchedule(day);
+        }
+
+        function renderWeeklySchedule(filterDay = activeScheduleDayFilter) {
+            const grid = document.getElementById('scheduleGrid');
+            if (!grid) return;
+
+            const todayName = getTodayIndoName();
+            const daysToRender = filterDay === 'semua' ? ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'] : [filterDay];
+
+            grid.innerHTML = daysToRender.map(day => {
+                const isToday = day === todayName;
+                const classesInDay = jadwalKuliah
+                    .filter(j => j.hari === day)
+                    .sort((a, b) => a.jamMulai.localeCompare(b.jamMulai));
+
+                const classItemsHTML = classesInDay.length === 0 ? `
+                    <div class="schedule-add-btn-empty" onclick="openAddScheduleModal('${day}')">
+                        + Belum ada kelas hari ${day}. Klik untuk tambah!
+                    </div>
+                ` : classesInDay.map(cls => `
+                    <div class="schedule-item">
+                        <div class="schedule-item-top">
+                            <div class="schedule-item-title">${escapeHtml(cls.matkul)}</div>
+                            <span class="schedule-item-time">${cls.jamMulai} - ${cls.jamSelesai}</span>
+                        </div>
+                        <div class="schedule-item-details">
+                            <div>🏢 ${escapeHtml(cls.ruangan || 'Ruangan belum diatur')} ${cls.sks ? `(${cls.sks} SKS)` : ''}</div>
+                            ${cls.dosen ? `<div>👤 ${escapeHtml(cls.dosen)}</div>` : ''}
+                            ${cls.catatan ? `<div style="font-style:italic;color:#a29bfe;">💡 ${escapeHtml(cls.catatan)}</div>` : ''}
+                        </div>
+                        <div class="schedule-item-actions">
+                            ${cls.linkOnline ? `
+                                <a href="${escapeHtml(cls.linkOnline)}" target="_blank" class="btn-icon-sched" title="Buka Link Kelas Online">
+                                    🔗 Link
+                                </a>
+                            ` : ''}
+                            <button type="button" class="btn-icon-sched" onclick="quickAddTaskForMatkul('${escapeHtml(cls.matkul)}')" title="Tambah tugas untuk matkul ini">
+                                ➕ Tugas
+                            </button>
+                            <button type="button" class="btn-icon-sched" onclick="openEditScheduleModal('${cls.id}')" title="Edit Jadwal">
+                                ✏️ Edit
+                            </button>
+                            <button type="button" class="btn-icon-sched delete" onclick="deleteSchedule('${cls.id}')" title="Hapus Jadwal">
+                                🗑️ Hapus
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="schedule-day-col ${isToday ? 'is-today' : ''}">
+                        <div class="schedule-day-header">
+                            <div class="schedule-day-name">
+                                <span>${day}</span>
+                                ${isToday ? '<span class="today-star" title="Hari Ini">⭐ Hari Ini</span>' : ''}
+                            </div>
+                            <div style="display:flex;align-items:center;gap:0.4rem;">
+                                <span class="schedule-day-count">${classesInDay.length} Kelas</span>
+                                <button type="button" class="btn-icon-sched" onclick="openAddScheduleModal('${day}')" title="Tambah kelas ${day}">➕</button>
+                            </div>
+                        </div>
+                        <div class="schedule-class-list">
+                            ${classItemsHTML}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddScheduleModal(prefillDay = null) {
+            document.getElementById('schedModalTitle').textContent = '➕ Tambah Jadwal Kelas Kuliah';
+            document.getElementById('scheduleForm').reset();
+            document.getElementById('schedId').value = '';
+            const deleteBtn = document.getElementById('schedDeleteModalBtn');
+            if (deleteBtn) deleteBtn.style.display = 'none';
+
+            const daySelect = document.getElementById('schedHari');
+            if (prefillDay && daySelect) {
+                daySelect.value = prefillDay;
+            } else if (daySelect) {
+                daySelect.value = getTodayIndoName();
+            }
+
+            document.getElementById('scheduleModal').classList.add('show');
+        }
+
+        function openEditScheduleModal(schedId) {
+            const item = jadwalKuliah.find(j => j.id === schedId);
+            if (!item) return;
+
+            document.getElementById('schedModalTitle').textContent = '✏️ Edit Jadwal Kelas Kuliah';
+            document.getElementById('schedId').value = item.id;
+            document.getElementById('schedHari').value = item.hari;
+            document.getElementById('schedMatkul').value = item.matkul;
+            document.getElementById('schedJamMulai').value = item.jamMulai;
+            document.getElementById('schedJamSelesai').value = item.jamSelesai;
+            document.getElementById('schedRuangan').value = item.ruangan || '';
+            document.getElementById('schedSKS').value = item.sks || '';
+            document.getElementById('schedLink').value = item.linkOnline || '';
+            document.getElementById('schedDosen').value = item.dosen || '';
+            document.getElementById('schedCatatan').value = item.catatan || '';
+
+            const deleteBtn = document.getElementById('schedDeleteModalBtn');
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
+
+            document.getElementById('scheduleModal').classList.add('show');
+        }
+
+        function handleModalDeleteSchedule() {
+            const id = document.getElementById('schedId').value;
+            if (!id) return;
+            deleteSchedule(id);
+            closeModal('scheduleModal');
+        }
+
+        function handleSaveSchedule(e) {
+            e.preventDefault();
+            const id = document.getElementById('schedId').value;
+            const hari = document.getElementById('schedHari').value;
+            const matkul = document.getElementById('schedMatkul').value.trim();
+            const jamMulai = document.getElementById('schedJamMulai').value;
+            const jamSelesai = document.getElementById('schedJamSelesai').value;
+            const ruangan = document.getElementById('schedRuangan').value.trim();
+            const sks = document.getElementById('schedSKS').value ? parseInt(document.getElementById('schedSKS').value) : null;
+            const linkOnline = document.getElementById('schedLink').value.trim();
+            const dosen = document.getElementById('schedDosen').value.trim();
+            const catatan = document.getElementById('schedCatatan').value.trim();
+
+            if (!matkul || !jamMulai || !jamSelesai) {
+                showToast('⚠️ Data Kurang', 'Mata kuliah, jam mulai, dan jam selesai wajib diisi.', 'warning');
+                return;
+            }
+
+            if (id) {
+                const index = jadwalKuliah.findIndex(j => j.id === id);
+                if (index !== -1) {
+                    jadwalKuliah[index] = {
+                        id, hari, matkul, jamMulai, jamSelesai, ruangan, sks, linkOnline, dosen, catatan
+                    };
+                    showToast('✅ Berhasil Diperbarui', `Jadwal "${matkul}" berhasil diperbarui!`, 'success');
+                }
+            } else {
+                const newSched = {
+                    id: 'sched_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    hari, matkul, jamMulai, jamSelesai, ruangan, sks, linkOnline, dosen, catatan
+                };
+                jadwalKuliah.push(newSched);
+                showToast('✅ Jadwal Ditambahkan', `Jadwal "${matkul}" hari ${hari} berhasil disimpan!`, 'success');
+            }
+
+            saveJadwal();
+            closeModal('scheduleModal');
+        }
+
+        function deleteSchedule(schedId) {
+            const item = jadwalKuliah.find(j => j.id === schedId);
+            if (!item) return;
+
+            if (confirm(`Hapus jadwal kuliah "${item.matkul}" pada hari ${item.hari}?`)) {
+                jadwalKuliah = jadwalKuliah.filter(j => j.id !== schedId);
+                saveJadwal();
+                showToast('🗑️ Jadwal Dihapus', `Jadwal "${item.matkul}" telah dihapus.`, 'info');
+            }
+        }
+
+        function quickAddTaskForMatkul(matkul) {
+            switchView('list');
+            const matkulInput = document.getElementById('taskMatkul');
+            const nameInput = document.getElementById('taskName');
+            if (matkulInput) {
+                matkulInput.value = matkul;
+            }
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.placeholder = `Tugas ${matkul}...`;
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('📝 Catat Tugas', `Mata kuliah disetel ke "${matkul}". Silakan ketik nama tugasnya.`, 'info');
+        }
+
+        function checkClassReminders() {
+            const todayName = getTodayIndoName();
+            const todayClasses = jadwalKuliah.filter(j => j.hari === todayName);
+            if (todayClasses.length === 0) return;
+
+            const now = new Date();
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            const dateKey = now.toISOString().slice(0, 10);
+
+            todayClasses.forEach(cls => {
+                const [h, m] = cls.jamMulai.split(':').map(Number);
+                const classStartMin = h * 60 + m;
+                const diffMin = classStartMin - nowMinutes;
+
+                const alertKey = `${cls.id}_${dateKey}_15m`;
+
+                if (diffMin > 0 && diffMin <= 15) {
+                    if (!notifiedClassAlerts[alertKey]) {
+                        notifiedClassAlerts[alertKey] = true;
+                        playBeep('urgent');
+                        const title = '🔔 Kelas Kuliah 15 Menit Lagi!';
+                        const body = `Mata kuliah "${cls.matkul}" di ${cls.ruangan || 'kelas'} jam ${cls.jamMulai}. Siapkan perlengkapanmu!`;
+                        showToast(title, body, 'warning');
+                        sendSystemNotification(title, body);
+                    }
+                }
+            });
+        }
+
+        function checkDeadlinesRealtime() {
+            checkClassReminders();
+            renderTodayBanner();
+            const now = new Date();
+            let urgentCount = 0;
+            let mostUrgentTask = null;
+
+            tasks.forEach(task => {
+                if (task.completed) return;
+
+                const deadline = new Date(task.deadline);
+                const diff = deadline - now;
+                const minutesLeft = diff / (1000 * 60);
+                const hoursLeft = diff / (1000 * 60 * 60);
+
+                const keyOverdue = `${task.id}_overdue`;
+                const key15m = `${task.id}_15m`;
+                const key1h = `${task.id}_1h`;
+                const key24h = `${task.id}_24h`;
+
+                if (diff < 0) {
+                    if (!notifiedTasks[keyOverdue]) {
+                        notifiedTasks[keyOverdue] = true;
+                        playBeep('urgent');
+                        const msg = `Tugas "${task.name}" (${task.matkul}) telah melewati batas deadline!`;
+                        showToast('❌ TUGAS TERLAMBAT!', msg, 'danger');
+                        sendSystemNotification('❌ TUGAS TERLAMBAT!', msg);
+                    }
+                } 
+                else if (minutesLeft <= 15) {
+                    urgentCount++;
+                    if (!mostUrgentTask) mostUrgentTask = task;
+                    if (!notifiedTasks[key15m]) {
+                        notifiedTasks[key15m] = true;
+                        playBeep('urgent');
+                        const msg = `🚨 DARURAT: "${task.name}" (${task.matkul}) harus dikumpulkan dalam ${Math.max(1, Math.round(minutesLeft))} menit lagi!`;
+                        showToast('🚨 DEADLINE DARURAT!', msg, 'danger');
+                        sendSystemNotification('🚨 DEADLINE DARURAT!', msg);
+                    }
+                }
+                else if (hoursLeft <= 1) {
+                    urgentCount++;
+                    if (!mostUrgentTask) mostUrgentTask = task;
+                    if (!notifiedTasks[key1h]) {
+                        notifiedTasks[key1h] = true;
+                        playBeep('urgent');
+                        const msg = `Segera kumpulkan "${task.name}" (${task.matkul})! Waktu tersisa sekitar ${Math.round(minutesLeft)} menit.`;
+                        showToast('🔥 DEADLINE KURANG DARI 1 JAM!', msg, 'danger');
+                        sendSystemNotification('🔥 DEADLINE KURANG DARI 1 JAM!', msg);
+                    }
+                }
+                else if (hoursLeft <= 24) {
+                    urgentCount++;
+                    if (!mostUrgentTask) mostUrgentTask = task;
+                    if (!notifiedTasks[key24h]) {
+                        notifiedTasks[key24h] = true;
+                        playBeep('warning');
+                        const msg = `Pengingat: "${task.name}" (${task.matkul}) deadline dalam ${Math.round(hoursLeft)} jam ke depan!`;
+                        showToast('⏰ Deadline Mendekat', msg, 'warning');
+                        sendSystemNotification('⏰ Deadline Mendekat', msg);
+                    }
+                }
+            });
+
+            const alertBar = document.getElementById('urgentAlertBar');
+            if (urgentCount > 0 && mostUrgentTask) {
+                const diff = new Date(mostUrgentTask.deadline) - now;
+                const hoursLeft = Math.max(0, Math.round(diff / (1000 * 60 * 60)));
+                const minsLeft = Math.max(1, Math.round(diff / (1000 * 60)));
+                const timeText = hoursLeft > 0 ? `${hoursLeft} jam lagi` : `${minsLeft} menit lagi`;
+                document.getElementById('urgentAlertText').innerHTML = 
+                    `🚨 <strong>PERINGATAN DEADLINE:</strong> Ada ${urgentCount} tugas yang harus segera dikumpulkan! Terdekat: <u>${escapeHtml(mostUrgentTask.name)}</u> (${timeText})`;
+                alertBar.classList.add('show');
+            } else {
+                alertBar.classList.remove('show');
+            }
+
+            renderTasks();
+            updateStats();
+        }
+
+        function dismissUrgentBar() {
+            document.getElementById('urgentAlertBar').classList.remove('show');
+        }
+
+        // ========== In-App Toast ==========
+        function showToast(title, body, type = 'warning') {
+            const container = document.getElementById('notifBanner');
+            const toast = document.createElement('div');
+            toast.className = `notif-toast ${type}`;
+            toast.innerHTML = `
+                <div class="notif-title">
+                    <span>${title}</span>
+                    <button class="notif-close-btn" onclick="this.parentElement.parentElement.remove()">&times;</button>
+                </div>
+                <div class="notif-body">${body}</div>
+            `;
+            container.prepend(toast);
+
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 7000);
+        }
+
+        // ========== Backup & Restore ==========
+        async function exportData() {
+            try {
+                const allFiles = await getAllFilesFromDB();
+                const backupObj = {
+                    version: 2,
+                    exportDate: new Date().toISOString(),
+                    tasks: tasks,
+                    jadwal: jadwalKuliah,
+                    files: allFiles
+                };
+
+                const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupObj));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute('href', dataStr);
+                downloadAnchor.setAttribute('download', `backup_tugas_kuliah_${new Date().toISOString().slice(0,10)}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+
+                showToast('💾 Backup Berhasil', 'File backup JSON berhasil diunduh!', 'success');
+            } catch (err) {
+                showToast('❌ Gagal Backup', 'Terjadi kesalahan saat mengekspor.', 'danger');
+                console.error(err);
+            }
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.tasks || !Array.isArray(data.tasks)) {
+                        throw new Error('Format JSON tidak valid');
+                    }
+
+                    if (confirm(`Impor ${data.tasks.length} tugas dari file backup?\nData yang ada saat ini akan digabungkan.`)) {
+                        const existingIds = new Set(tasks.map(t => t.id));
+                        for (const t of data.tasks) {
+                            if (!existingIds.has(t.id)) {
+                                tasks.push(t);
+                            }
+                        }
+                        saveTasks();
+                        syncTasksToCloud();
+
+                        if (data.jadwal && Array.isArray(data.jadwal)) {
+                            const existingSchedIds = new Set(jadwalKuliah.map(j => j.id));
+                            for (const j of data.jadwal) {
+                                if (!existingSchedIds.has(j.id)) {
+                                    jadwalKuliah.push(j);
+                                }
+                            }
+                            saveJadwal();
+                        }
+
+                        if (data.files && Array.isArray(data.files)) {
+                            for (const f of data.files) {
+                                await saveFileToDB(f);
+                            }
+                        }
+
+                        updateMatkulOptions();
+                        renderTasks();
+                        updateStats();
+                        playBeep('success');
+                        showToast('📥 Restore Berhasil', `${data.tasks.length} data tugas berhasil dipulihkan!`, 'success');
+                    }
+                } catch (err) {
+                    showToast('❌ Gagal Restore', 'File backup rusak atau tidak sesuai format.', 'danger');
+                    console.error(err);
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ========== Helpers ==========
+        function saveTasks() {
+            localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('id-ID', {
+                weekday: 'short', day: 'numeric', month: 'short',
+                year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function getCountdown(deadline, completed) {
+            if (completed) return null;
+            const now = new Date();
+            const diff = deadline - now;
+
+            if (diff < 0) {
+                const elapsed = Math.abs(diff);
+                const days = Math.floor(elapsed / (1000*60*60*24));
+                const hours = Math.floor((elapsed % (1000*60*60*24)) / (1000*60*60));
+                if (days > 0) return { text: `⚠️ Terlambat ${days}h ${hours}j`, urgent: true };
+                const mins = Math.floor((elapsed % (1000*60*60)) / (1000*60));
+                return { text: `⚠️ Terlambat ${hours}j ${mins}m`, urgent: true };
+            }
+
+            const days = Math.floor(diff / (1000*60*60*24));
+            const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+            const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+
+            if (days > 0) return { text: `⏳ ${days}h ${hours}j lagi`, urgent: days <= 1 };
+            if (hours > 0) return { text: `⏳ ${hours}j ${mins}m lagi`, urgent: hours <= 3 };
+            return { text: `⏳ ${mins} menit lagi`, urgent: true };
+        }
+    </script>
+</body>
+</html>
