@@ -1970,7 +1970,53 @@
         }
 
         // ========== State ==========
+        const DEFAULT_SAMPLE_SCHEDULE = [
+            {
+                id: 'sched_sample_1',
+                hari: 'Senin',
+                matkul: 'Kecerdasan Buatan',
+                jamMulai: '08:00',
+                jamSelesai: '10:30',
+                ruangan: 'Lab Komputer 2',
+                linkOnline: '',
+                dosen: 'Dr. Hendra, M.Kom',
+                sks: 3,
+                catatan: 'Praktikum Python & Machine Learning'
+            },
+            {
+                id: 'sched_sample_2',
+                hari: 'Rabu',
+                matkul: 'Pemrograman Web',
+                jamMulai: '10:45',
+                jamSelesai: '13:15',
+                ruangan: 'Gedung D Ruang 304',
+                linkOnline: 'https://meet.google.com',
+                dosen: 'Siti Rahma, M.T',
+                sks: 3,
+                catatan: 'Pertemuan hybrid'
+            },
+            {
+                id: 'sched_sample_3',
+                hari: 'Kamis',
+                matkul: 'Basis Data Lanjut',
+                jamMulai: '13:30',
+                jamSelesai: '15:10',
+                ruangan: 'Gedung C Ruang 201',
+                linkOnline: '',
+                dosen: 'Agus Setiawan, M.Cs',
+                sks: 2,
+                catatan: 'Materi SQL indexing'
+            }
+        ];
+
         let tasks = JSON.parse(localStorage.getItem('kuliahTasks') || '[]');
+        let jadwalKuliah = [];
+        try {
+            const savedSched = localStorage.getItem('jadwalKuliah');
+            jadwalKuliah = savedSched ? JSON.parse(savedSched) : DEFAULT_SAMPLE_SCHEDULE;
+        } catch(e) {
+            jadwalKuliah = DEFAULT_SAMPLE_SCHEDULE;
+        }
         let currentFilter = 'semua';
         let currentMatkulFilter = 'all';
         let currentSort = 'deadline-asc';
@@ -2002,6 +2048,8 @@
             updateMatkulOptions();
             renderTasks();
             renderCalendar();
+            renderTodayBanner();
+            renderWeeklySchedule();
             updateStats();
             checkNotifPermission();
             setupFileUpload();
@@ -2091,19 +2139,38 @@
 
                         const cloudData = snapshot.val();
                         if (cloudData) {
-                            if (Array.isArray(cloudData.tasks)) {
-                                tasks = cloudData.tasks;
+                            // 1. Sync Tasks
+                            if (cloudData.tasks !== undefined) {
+                                const rawTasks = Array.isArray(cloudData.tasks)
+                                    ? cloudData.tasks
+                                    : (cloudData.tasks && typeof cloudData.tasks === 'object' ? Object.values(cloudData.tasks) : []);
+                                tasks = rawTasks;
                                 localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
                                 renderTasks();
                                 updateStats();
                             }
-                            if (Array.isArray(cloudData.jadwal)) {
-                                jadwalKuliah = cloudData.jadwal;
+
+                            // 2. Sync Jadwal Kuliah
+                            if (cloudData.jadwal !== undefined && cloudData.jadwal !== null) {
+                                const rawJadwal = Array.isArray(cloudData.jadwal)
+                                    ? cloudData.jadwal
+                                    : (typeof cloudData.jadwal === 'object' ? Object.values(cloudData.jadwal) : []);
+                                jadwalKuliah = rawJadwal;
                                 localStorage.setItem('jadwalKuliah', JSON.stringify(jadwalKuliah));
                                 renderTodayBanner();
                                 renderWeeklySchedule();
+                            } else if (jadwalKuliah && jadwalKuliah.length > 0) {
+                                // Auto-healing: Jika di cloud jadwal terhapus/kosong tapi di lokal ada, segera kirim ke cloud
+                                realtimeDB.ref('users/' + syncUserId + '/jadwal').set(jadwalKuliah).catch(() => {});
                             }
                             updateMatkulOptions();
+                        } else {
+                            // First time cloud setup: inisialisasi cloud dengan data lokal yang ada
+                            realtimeDB.ref('users/' + syncUserId).update({
+                                tasks: tasks,
+                                jadwal: jadwalKuliah,
+                                updatedAt: new Date().toISOString()
+                            }).catch(() => {});
                         }
                     }, (error) => {
                         console.error('Realtime Database sync error:', error);
@@ -2129,12 +2196,10 @@
             const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
             if (realtimeDB && syncUserId) {
                 try {
-                    await realtimeDB.ref('users/' + syncUserId).set({
-                        tasks: tasks,
-                        updatedAt: new Date().toISOString()
-                    });
+                    await realtimeDB.ref('users/' + syncUserId + '/tasks').set(tasks);
+                    await realtimeDB.ref('users/' + syncUserId + '/updatedAt').set(new Date().toISOString());
                 } catch (err) {
-                    console.warn('Gagal push ke Realtime Database:', err);
+                    console.warn('Gagal push tasks ke Realtime Database:', err);
                 }
             }
         }
@@ -3352,53 +3417,6 @@
 
         
         // ========== JADWAL KULIAH MINGGUAN & BANNER HARI INI ==========
-        const DEFAULT_SAMPLE_SCHEDULE = [
-            {
-                id: 'sched_sample_1',
-                hari: 'Senin',
-                matkul: 'Kecerdasan Buatan',
-                jamMulai: '08:00',
-                jamSelesai: '10:30',
-                ruangan: 'Lab Komputer 2',
-                linkOnline: '',
-                dosen: 'Dr. Hendra, M.Kom',
-                sks: 3,
-                catatan: 'Praktikum Python & Machine Learning'
-            },
-            {
-                id: 'sched_sample_2',
-                hari: 'Rabu',
-                matkul: 'Pemrograman Web',
-                jamMulai: '10:45',
-                jamSelesai: '13:15',
-                ruangan: 'Gedung D Ruang 304',
-                linkOnline: 'https://meet.google.com',
-                dosen: 'Siti Rahma, M.T',
-                sks: 3,
-                catatan: 'Pertemuan hybrid'
-            },
-            {
-                id: 'sched_sample_3',
-                hari: 'Kamis',
-                matkul: 'Basis Data Lanjut',
-                jamMulai: '13:30',
-                jamSelesai: '15:10',
-                ruangan: 'Gedung C Ruang 201',
-                linkOnline: '',
-                dosen: 'Agus Setiawan, M.Cs',
-                sks: 2,
-                catatan: 'Materi SQL indexing'
-            }
-        ];
-
-        let jadwalKuliah = [];
-        try {
-            const savedSched = localStorage.getItem('jadwalKuliah');
-            jadwalKuliah = savedSched ? JSON.parse(savedSched) : DEFAULT_SAMPLE_SCHEDULE;
-        } catch(e) {
-            jadwalKuliah = DEFAULT_SAMPLE_SCHEDULE;
-        }
-
         let activeScheduleDayFilter = 'semua';
         let notifiedClassAlerts = {};
 
@@ -3421,7 +3439,9 @@
 
             const syncUserId = localStorage.getItem('syncUserId') || 'tugas_saya';
             if (realtimeDB && syncUserId) {
-                realtimeDB.ref('users/' + syncUserId + '/jadwal').set(jadwalKuliah).catch(e => {
+                realtimeDB.ref('users/' + syncUserId + '/jadwal').set(jadwalKuliah).then(() => {
+                    realtimeDB.ref('users/' + syncUserId + '/updatedAt').set(new Date().toISOString());
+                }).catch(e => {
                     console.warn('Gagal sync jadwal ke Realtime Database:', e);
                 });
             }
@@ -3781,12 +3801,18 @@
                         const snapshot = await realtimeDB.ref('users/' + syncUserId).once('value');
                         const cloudData = snapshot.val();
                         if (cloudData) {
-                            if (Array.isArray(cloudData.tasks)) {
-                                tasks = cloudData.tasks;
+                            if (cloudData.tasks !== undefined) {
+                                const rawTasks = Array.isArray(cloudData.tasks)
+                                    ? cloudData.tasks
+                                    : (cloudData.tasks && typeof cloudData.tasks === 'object' ? Object.values(cloudData.tasks) : []);
+                                tasks = rawTasks;
                                 localStorage.setItem('kuliahTasks', JSON.stringify(tasks));
                             }
-                            if (Array.isArray(cloudData.jadwal)) {
-                                jadwalKuliah = cloudData.jadwal;
+                            if (cloudData.jadwal !== undefined && cloudData.jadwal !== null) {
+                                const rawJadwal = Array.isArray(cloudData.jadwal)
+                                    ? cloudData.jadwal
+                                    : (typeof cloudData.jadwal === 'object' ? Object.values(cloudData.jadwal) : []);
+                                jadwalKuliah = rawJadwal;
                                 localStorage.setItem('jadwalKuliah', JSON.stringify(jadwalKuliah));
                             }
                         }
